@@ -10,9 +10,9 @@ import javafx.scene.layout.AnchorPane;
 public class SceneController {
 
   private HashMap<String, AnchorPane> screenMap = new HashMap<>();
-  private HashMap<String, Controller> controllerMap = new HashMap<>();
+  private HashMap<String, GameController> controllerMap = new HashMap<>();
   private Scene main;
-  private Controller currentController;
+  private GameController currentController;
 
   public SceneController(Scene main) {
     this.main = main;
@@ -21,9 +21,9 @@ public class SceneController {
 
   /**
    * @param name - key
-   * @param fxmlPath - path to Controller .fxml
+   * @param fxmlPath - path to GameController .fxml
    */
-  public void addScreen(String name, String fxmlPath) throws IOException{
+  public void addScreen(String name, String fxmlPath) throws IOException {
     FXMLLoader fxmlLoader = getLoaderFromPath(fxmlPath);
     screenMap.put(name, fxmlLoader.load());
     controllerMap.put(name, fxmlLoader.getController());
@@ -38,13 +38,12 @@ public class SceneController {
     currentController = controllerMap.get(name);
   }
 
-  public FXMLLoader getLoaderFromPath(String filePath) throws IOException {
+  public FXMLLoader getLoaderFromPath(String filePath) {
     URL location = getClass().getResource(filePath);
-    FXMLLoader loader = new FXMLLoader(location);
-    return loader;
+    return new FXMLLoader(location);
   }
 
-  public Controller getCurrentController() {
+  public GameController getCurrentController() {
     return currentController;
   }
 }
