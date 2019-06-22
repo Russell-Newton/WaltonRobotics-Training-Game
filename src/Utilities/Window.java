@@ -1,12 +1,16 @@
-import static Utilities.Constants.primaryScreenBounds;
+package Utilities;
 
-import Utilities.SceneController;
+import static Utilities.StaticUtilities.primaryScreenBounds;
+
 import java.io.IOException;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
+/**
+ * @author Russell Newton
+ */
 public class Window extends Application {
 
   public static Scene scene = new Scene(new AnchorPane());
@@ -33,6 +37,11 @@ public class Window extends Application {
     primaryStage.show();
   }
 
+  /**
+   * Add new {@code sceneController.addScreen()} calls here if you want to use multiple screens.
+   *
+   * @throws IOException if the .fxml file cannot be found
+   */
   private void addScreens() throws IOException {
     sceneController.addScreen("main", "/Assets/BasicGameController.fxml");
   }

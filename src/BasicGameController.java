@@ -2,20 +2,17 @@ import Utilities.GameController;
 import Utilities.Player;
 
 /**
- * @author Russell Newton
+ * This is a simple GameController to get you started.
  **/
 public class BasicGameController extends GameController {
 
   @Override
   protected void init() {
-    player = new Player(this, 48f, 78);
-    addToScreen(player.getScreenMask());
+    player = new Player(this);
   }
 
   @Override
   protected void execute() {
-    super.execute();
-    player.update();
   }
 
   @Override

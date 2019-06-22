@@ -1,89 +1,98 @@
 package Utilities;
 
-import static Utilities.Constants.toJFXAngle;
-import static Utilities.Constants.toPixelPosX;
-import static Utilities.Constants.toPixelPosY;
+import static Utilities.StaticUtilities.defaultPlayerAngle;
+import static Utilities.StaticUtilities.defaultPlayerFill;
+import static Utilities.StaticUtilities.defaultPlayerHeight;
+import static Utilities.StaticUtilities.defaultPlayerStartX;
+import static Utilities.StaticUtilities.defaultPlayerStartY;
+import static Utilities.StaticUtilities.defaultPlayerWidth;
+import static Utilities.StaticUtilities.imageSpriteScale;
 
 import javafx.scene.image.Image;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
-import org.jbox2d.dynamics.BodyDef;
 import org.jbox2d.dynamics.BodyType;
-import org.jbox2d.dynamics.FixtureDef;
 
 /**
  * @author Russell Newton
  **/
 public class Player extends Obstacle {
 
-  private static float defaultHeight = 5f;
-  private static float defaultWidth = 15f;
-  private static float defaultAngle = 0f;
-
+  /**
+   * Creates a player with an {@code Image} as a sprite.
+   *
+   * @param controller - the controller this {@code Player} belongs to.
+   * @param sprite - the {@code Image} to be used as a sprite.
+   * @param startX - the starting x coordinate of the corresponding physics body.
+   * @param startY - the starting y coordinate of the corresponding physics body.
+   */
   public Player(GameController controller, Image sprite, float startX, float startY) {
-    super(controller, startX, startY, (float) sprite.getWidth(),
-        (float) sprite.getHeight(), defaultAngle, new ImagePattern(sprite));
-
-    initBody(startX, startY, (float) (sprite.getWidth()),
-        (float) (sprite.getHeight()));
+    super(controller, startX, startY, (float) sprite.getWidth() * imageSpriteScale,
+        (float) sprite.getHeight() * imageSpriteScale, defaultPlayerAngle,
+        new ImagePattern(sprite), BodyType.DYNAMIC);
   }
 
+  /**
+   * Creates a player with an {@code Image} as a sprite at the default starting location.
+   *
+   * @param controller - the controller this {@code Player} belongs to.
+   * @param sprite - the {@code Image} to be used as a sprite.
+   */
   public Player(GameController controller, Image sprite) {
-    this(controller, sprite, 0, 0);
+    this(controller, sprite, defaultPlayerStartX, defaultPlayerStartY);
   }
 
-  public Player(GameController controller, float startX, float startY) {
-    super(controller, startX, startY, defaultWidth, defaultHeight, defaultAngle, Color.BLUE);
-
-//    initBody((float) startX, (float) startY, defaultWidth, defaultHeight);
+  /**
+   * Creates a player with a sprite from a file path.
+   *
+   * @param controller - the controller this {@code Player} belongs to.
+   * @param spritePath - the path to the desired sprite image.
+   * @param startX - the starting x coordinate of the corresponding physics body.
+   * @param startY - the starting y coordinate of the corresponding physics body.
+   */
+  public Player(GameController controller, String spritePath, float startX, float startY) {
+    this(controller, new Image(spritePath), startX, startY);
   }
 
-  public Player(GameController controller) {
-    this(controller, 0, 0);
-  }
-
+  /**
+   * Creates a player with a sprite from a file path at the default starting location.
+   *
+   * @param controller - the controller this {@code Player} belongs to.
+   * @param spritePath - the path to the desired sprite image.
+   */
   public Player(GameController controller, String spritePath) {
     this(controller, new Image(spritePath));
   }
 
-  @Override
-  protected void initBody(float startX, float startY, float width, float height) {
-    BodyDef bd = new BodyDef();
-    bd.position.set(startX, startY);
-    bd.type = BodyType.DYNAMIC;
-
-    PolygonShape ps = new PolygonShape();
-    ps.set(new Vec2[]{
-        new Vec2(0, 0), new Vec2(width, 0),
-        new Vec2(width, -height), new Vec2(0, -height)
-    }, 4);
-//    ps.setAsBox(width, height);
-
-    FixtureDef fd = new FixtureDef();
-    fd.shape = ps;
-    fd.friction = 0.3f;
-    fd.restitution = 0f;
-    fd.density = 1f;
-
-    body = controller.world.createBody(bd);
-    body.createFixture(fd);
-
-//    updateScreenMask();
+  /**
+   * Creates a player with the default fill.
+   *
+   * @param controller - the controller this {@code Player} belongs to.
+   * @param startX - the starting x coordinate of the corresponding physics body.
+   * @param startY - the starting y coordinate of the corresponding physics body.
+   */
+  public Player(GameController controller, float startX, float startY) {
+    super(controller, startX, startY, defaultPlayerWidth, defaultPlayerHeight, defaultPlayerAngle,
+        defaultPlayerFill, BodyType.DYNAMIC);
   }
 
+  /**
+   * Creates a player with the default fill at the default location.
+   *
+   * @param controller - the controller this {@code Player} belongs to.
+   */
+  public Player(GameController controller) {
+    this(controller, defaultPlayerStartX, defaultPlayerStartY);
+  }
+
+  /**
+   * Updates this {@code Player's} screenMask to its physics body. This is run every execution
+   * cycle.
+   */
   public void update() {
     updateScreenMask();
   }
-
-//  protected void updateScreenMask() {
-//    screenMask.setLayoutX(toPixelPosX(body.getPosition().x));
-//    screenMask.setLayoutY(toPixelPosY(body.getPosition().y));
-//    screenMask.setRotate(toJFXAngle(body.getAngle()));
-//    System.out.println(toString());
-//  }
-
 
   @Override
   public String toString() {

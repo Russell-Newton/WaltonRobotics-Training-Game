@@ -1,17 +1,16 @@
 package Utilities;
 
-import static Utilities.Constants.toJB2DAngle;
-import static Utilities.Constants.toJFXAngle;
-import static Utilities.Constants.toPixelHeight;
-import static Utilities.Constants.toPixelPosX;
-import static Utilities.Constants.toPixelPosY;
-import static Utilities.Constants.toPixelWidth;
+import static Utilities.StaticUtilities.defaultObstacleFill;
+import static Utilities.StaticUtilities.toJB2DAngle;
+import static Utilities.StaticUtilities.toJFXAngle;
+import static Utilities.StaticUtilities.toPixelHeight;
+import static Utilities.StaticUtilities.toPixelPosX;
+import static Utilities.StaticUtilities.toPixelPosY;
+import static Utilities.StaticUtilities.toPixelWidth;
 
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Translate;
-import javax.annotation.Nullable;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
@@ -25,7 +24,6 @@ import org.jbox2d.dynamics.FixtureDef;
 public class Obstacle {
 
   protected final GameController controller;
-  //Scaled by screen units
   public float startX;
   public float startY;
   public float width;
@@ -33,10 +31,22 @@ public class Obstacle {
   public float angle;
   protected Body body;
   Rectangle screenMask;
-  private float angleRotationTolerance = 0.0001f;
+  private BodyType bodyType;
 
+  /**
+   * Create a new {@code obstacle}.
+   *
+   * @param controller - the controller this {@code Obstacle} belongs to.
+   * @param startX - the starting x coordinate of the corresponding physics body.
+   * @param startY - the starting y coordinate of the corresponding physics body.
+   * @param width - the width of the corresponding physics body.
+   * @param height - the height of the corresponding physics body.
+   * @param angle - the starting angle of the corresponding physics body..
+   * @param fill - the fill of the corresponding screen mask.
+   * @param bodyType - the {@code BodyType} of the corresponding physics body.
+   */
   public Obstacle(GameController controller, float startX, float startY, float width,
-      float height, float angle, @Nullable Paint fill) {
+      float height, float angle, Paint fill, BodyType bodyType) {
     this.startX = startX;
     this.startY = startY;
     this.width = width;
@@ -45,22 +55,62 @@ public class Obstacle {
 
     this.controller = controller;
 
-    initBody(startX, startY, width, height);
+    this.bodyType = bodyType;
+
+    initBody();
 
     screenMask = new Rectangle(toPixelWidth(width), toPixelHeight(height), fill);
     screenMask.setUserData(body);
 //    screenMask.setStroke(Color.BLACK);
     updateScreenMask();
+    controller.addToScreen(screenMask);
   }
 
+  /**
+   * Create a new {@code obstacle} with the a {@code KINEMATIC BodyType}.
+   *
+   * @param controller - the controller this {@code Obstacle} belongs to.
+   * @param startX - the starting x coordinate of the corresponding physics body.
+   * @param startY - the starting y coordinate of the corresponding physics body.
+   * @param width - the width of the corresponding physics body.
+   * @param height - the height of the corresponding physics body.
+   * @param angle - the starting angle of the corresponding physics body..
+   * @param fill - the fill of the corresponding screenMask.
+   */
+  public Obstacle(GameController controller, float startX, float startY, float width,
+      float height, float angle, Paint fill) {
+    this(controller, startX, startY, width, height, angle, fill, BodyType.KINEMATIC);
+  }
+
+  /**
+   * Create a new {@code obstacle} with the a {@code KINEMATIC BodyType} and default fill.
+   *
+   * @param controller - the controller this {@code Obstacle} belongs to.
+   * @param startX - the starting x coordinate of the corresponding physics body.
+   * @param startY - the starting y coordinate of the corresponding physics body.
+   * @param width - the width of the corresponding physics body.
+   * @param height - the height of the corresponding physics body.
+   * @param angle - the starting angle of the corresponding physics body..
+   */
+  public Obstacle(GameController controller, float startX, float startY, float width,
+      float height, float angle) {
+    this(controller, startX, startY, width, height, angle, defaultObstacleFill, BodyType.KINEMATIC);
+  }
+
+  /**
+   * @return this {@code Obstacle's} screenMask.
+   */
   public Rectangle getScreenMask() {
     return screenMask;
   }
 
-  protected void initBody(float startX, float startY, float width, float height) {
+  /**
+   * Initializes this {@code Obstacle's} corresponding physics body.
+   */
+  protected void initBody() {
     BodyDef bd = new BodyDef();
     bd.position.set(startX, startY);
-    bd.type = BodyType.KINEMATIC;
+    bd.type = bodyType;
 
     PolygonShape ps = new PolygonShape();
     ps.set(new Vec2[]{
@@ -74,7 +124,7 @@ public class Obstacle {
     body = controller.world.createBody(bd);
     body.createFixture(fd);
     float rotation = toJB2DAngle(angle);
-    while(Math.abs(body.getAngle() - rotation) >= angleRotationTolerance) {
+    while (Math.abs(body.getAngle() - rotation) >= StaticUtilities.angleRotationTolerance) {
 
       float c = 1; //speed of rotation
       float q = rotation - body.getAngle();
@@ -82,29 +132,45 @@ public class Obstacle {
       controller.stepWorld();
     }
     body.setAngularVelocity(0);
-
-//    updateScreenMask();
   }
 
+  /**
+   * Updates this {@code Obstacle's} screenMask to match its physics body.
+   */
   protected void updateScreenMask() {
 
+    //Remove previous rotation
     screenMask.getTransforms().clear();
 
+    //Set layout box translation and rotation
     screenMask.getTransforms().add(new Rotate(toJFXAngle(body.getAngle()), 0,
         screenMask.getHeight()));
-
     screenMask.setLayoutX(toPixelPosX(body.getPosition().x));
     screenMask.setLayoutY(toPixelPosY(body.getPosition().y));
+
+    //Set translation fields to keep rotation based on bottom left corner
     Vec2 dCorner = originPointShift(body.getAngle());
     screenMask.setTranslateX(-dCorner.x);
     screenMask.setTranslateY(-dCorner.y);
-//    float dX = (float) (x - screenMask.getBoundsInParent().getMinX());
-//    float dY = (float) (y - screenMask.getBoundsInParent().getMinY());
-//    screenMask.getTransforms().add(new Translate(-toPixelPosX(dCorner.x), -toPixelPosY(dCorner.y)));
-//    screenMask.setLayoutX(x + dX);
-//    screenMask.setLayoutY(y + dY);
 
     System.out.println(toString());
+  }
+
+  /**
+   * Calculates the required screenMask shift to sync up JavaFX and JBox2D rotations.
+   *
+   * @param angle - the rotation angle of the screenMask, in radians.
+   * @return a {@code Vec2} corresponding to the required shift.
+   */
+  private Vec2 originPointShift(float angle) {
+    //Find location of bottom left corner after rotation
+    double xPrime = -screenMask.getHeight() * Math.sin(angle);
+    double yPrime = screenMask.getHeight() * Math.cos(angle);
+
+    float dX = (float) xPrime;
+    float dY = (float) (yPrime - screenMask.getHeight());
+
+    return new Vec2(dX, dY);
   }
 
   @Override
@@ -118,20 +184,5 @@ public class Obstacle {
     }
     toString.append("  ]\n]");
     return toString.toString();
-  }
-
-  /**
-   *
-   * @param angle - the rotation angle of the screenMask, in radians.
-   * @return
-   */
-  private Vec2 originPointShift(float angle) {
-    double xPrime = -screenMask.getHeight() * Math.sin(angle);
-    double yPrime = screenMask.getHeight() * Math.cos(angle);
-
-    float dX = (float) xPrime;
-    float dY = (float) (yPrime - screenMask.getHeight());
-
-    return new Vec2(dX, dY);
   }
 }
