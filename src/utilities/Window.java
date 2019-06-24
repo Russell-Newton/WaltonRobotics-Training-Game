@@ -1,11 +1,11 @@
-package Utilities;
+package utilities;
 
-import static Utilities.StaticUtilities.primaryScreenBounds;
+import static utilities.metadata.StaticUtilities.PRIMARY_SCREEN_BOUNDS;
+import static utilities.metadata.StaticUtilities.scene;
+import static utilities.metadata.StaticUtilities.sceneController;
 
 import java.io.IOException;
 import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
 /**
@@ -13,8 +13,6 @@ import javafx.stage.Stage;
  */
 public class Window extends Application {
 
-  public static Scene scene = new Scene(new AnchorPane());
-  public static SceneController sceneController = new SceneController(scene);
 
   public static void main(String[] args) {
     launch(args);
@@ -23,16 +21,16 @@ public class Window extends Application {
   @Override
   public void start(Stage primaryStage) throws Exception {
     addScreens();
-    sceneController.activate("main");
+    sceneController.activate("test");
 
     primaryStage.setScene(scene);
     primaryStage.setResizable(false);
     primaryStage.setTitle("Walton Robotics Training Game");
 
-    primaryStage.setX(primaryScreenBounds.getMinX());
-    primaryStage.setY(primaryScreenBounds.getMinY());
-    primaryStage.setWidth(primaryScreenBounds.getWidth());
-    primaryStage.setHeight(primaryScreenBounds.getHeight());
+    primaryStage.setX(PRIMARY_SCREEN_BOUNDS.getMinX());
+    primaryStage.setY(PRIMARY_SCREEN_BOUNDS.getMinY());
+    primaryStage.setWidth(PRIMARY_SCREEN_BOUNDS.getWidth());
+    primaryStage.setHeight(PRIMARY_SCREEN_BOUNDS.getHeight());
 
     primaryStage.show();
   }
@@ -43,6 +41,7 @@ public class Window extends Application {
    * @throws IOException if the .fxml file cannot be found
    */
   private void addScreens() throws IOException {
-    sceneController.addScreen("main", "/Assets/BasicGameController.fxml");
+    sceneController.addScreen("main", "/assets/BasicGameController.fxml");
+    sceneController.addScreen("test", "/assets/TestGameController.fxml");
   }
 }

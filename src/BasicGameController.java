@@ -1,5 +1,5 @@
-import Utilities.GameController;
-import Utilities.Player;
+import utilities.GameController;
+import utilities.Player;
 
 /**
  * This is a simple GameController to get you started.

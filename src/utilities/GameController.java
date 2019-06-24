@@ -1,9 +1,9 @@
-package Utilities;
+package utilities;
 
-import static Utilities.StaticUtilities.FRAME_INTERVAL;
-import static Utilities.StaticUtilities.GRAVITY_ACCELERATION;
-import static Utilities.StaticUtilities.POSITION_ITERATIONS;
-import static Utilities.StaticUtilities.VELOCITY_ITERATIONS;
+import static utilities.metadata.StaticUtilities.FRAME_INTERVAL;
+import static utilities.metadata.StaticUtilities.GRAVITY_ACCELERATION;
+import static utilities.metadata.StaticUtilities.POSITION_ITERATIONS;
+import static utilities.metadata.StaticUtilities.VELOCITY_ITERATIONS;
 
 import java.util.LinkedList;
 import java.util.stream.Collectors;
@@ -29,19 +29,22 @@ public abstract class GameController {
 
   protected Player player;
   @FXML
-  protected AnchorPane root;
+  AnchorPane root;
   World world;
+  WorldContactListener contactListener;
   private Timeline executionTimeline;
   private LinkedList<Obstacle> obstacles = new LinkedList<>();
   private Paint backgroundPaint = Color.LIGHTBLUE;
 
   /**
-   * Creates a new {@code GameController}
+   * Creates a new {@code GameController}.
    */
   public GameController() {
     //Set up physics engine
     Vec2 gravity = new Vec2(0f, GRAVITY_ACCELERATION);
     world = new World(gravity);
+    contactListener = new WorldContactListener();
+    world.setContactListener(contactListener);
 
     //Set up executionTimeline
     executionTimeline = new Timeline(
@@ -62,7 +65,7 @@ public abstract class GameController {
   }
 
   /**
-   * Run when the {@code GameController} is loaded. Requires the @FXML tag.
+   * Run when the {@code GameController} is loaded. Requires the {@code @FXML} tag.
    */
   @FXML
   protected void initialize() {
@@ -109,7 +112,7 @@ public abstract class GameController {
   /**
    * Adds a {@code Node} to the {@code Scene}.
    *
-   * @param object - the object to add to the {@code Scene}.
+   * @param object the object to add to the {@code Scene}.
    */
   protected void addToScreen(Node object) {
     root.getChildren().addAll(object);
@@ -118,7 +121,7 @@ public abstract class GameController {
   /**
    * Adds a {@code LinkedList} of {@code Nodes} to the {@code Scene}.
    *
-   * @param objects - the objects to add to the {@code Scene}.
+   * @param objects the objects to add to the {@code Scene}.
    */
   protected void addToScreen(LinkedList<? extends Node> objects) {
     root.getChildren().addAll(objects);
@@ -127,7 +130,7 @@ public abstract class GameController {
   /**
    * Adds a {@code Stream} of {@code Nodes} to the {@code Scene}.
    *
-   * @param objects - the objects to add to the {@code Scene}.
+   * @param objects the objects to add to the {@code Scene}.
    */
   protected void addToScreen(Stream<? extends Node> objects) {
     root.getChildren().addAll(objects.collect(Collectors.toCollection(LinkedList::new)));
@@ -136,7 +139,7 @@ public abstract class GameController {
   /**
    * Sets the background fill.
    *
-   * @param paint - the {@code Paint} to fill the background with.
+   * @param paint the {@code Paint} to fill the background with.
    */
   protected void setBackground(Paint paint) {
     root.setBackground(new Background(new BackgroundFill(paint, null, null)));
@@ -159,9 +162,24 @@ public abstract class GameController {
   /**
    * Adds an {@code Obstacle} to the list of active {@code Obstacles}.
    *
-   * @param obstacle - the {@code Obstacle} to add.
+   * @param obstacle the {@code Obstacle} to add.
    */
   protected void addObstacle(Obstacle obstacle) {
     obstacles.add(obstacle);
   }
+
+  /**
+   * Resumes the timeline's execution.
+   */
+  public void resumeExecutionTimeline() {
+    executionTimeline.play();
+  }
+
+  /**
+   * Pauses the timeline's execution.
+   */
+  public void pauseExecutionTimeline() {
+    executionTimeline.pause();
+  }
+
 }
