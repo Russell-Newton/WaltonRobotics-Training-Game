@@ -1,17 +1,18 @@
 package utilities;
 
-import utilities.metadata.ContactOperation;
 import java.util.HashMap;
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.callbacks.ContactListener;
 import org.jbox2d.collision.Manifold;
 import org.jbox2d.dynamics.contacts.Contact;
+import utilities.metadata.ContactOperation;
 
 /**
  * A {@code WorldContactListener} is created in any {@code GameController} by default. It manages
  * and runs every {@code ContactOperation}.
- * @see ContactOperation
+ *
  * @author Russell Newton
+ * @see ContactOperation
  **/
 public class WorldContactListener implements ContactListener {
 
@@ -27,6 +28,7 @@ public class WorldContactListener implements ContactListener {
   /**
    * This operation runs when a contact is first made anywhere in the physics engine. Use it to
    * determine handling of two objects based on their {@code UserData}.
+   *
    * @param contact passed by the {@code WorldContactListener}. Perform checks on {@code contact
    * .getFixtureA()} and {@code contact.getFixtureB()}.
    */
@@ -38,8 +40,9 @@ public class WorldContactListener implements ContactListener {
   }
 
   /**
-   * This operation runs when a contact is ended anywhere in the physics engine. Use it to
-   * determine handling of two objects based on their {@code UserData}.
+   * This operation runs when a contact is ended anywhere in the physics engine. Use it to determine
+   * handling of two objects based on their {@code UserData}.
+   *
    * @param contact passed by the {@code WorldContactListener}. Perform checks on {@code contact
    * .getFixtureA()} and {@code contact.getFixtureB()}.
    */
@@ -54,6 +57,7 @@ public class WorldContactListener implements ContactListener {
    * This operation runs when a two objects are overlapping, before the engine solves the overlap.
    * Use it to determine handling of two objects during collision, based on their {@code UserData}.
    * This can be used for one-way obstacles.
+   *
    * @param contact passed by {@code WorldContactListener}. Perform checks on {@code contact
    * .getFixtureA()} and {@code contact.getFixtureB()}.
    * @param manifold gives information about the overlap, supplied by the (@code
@@ -70,10 +74,11 @@ public class WorldContactListener implements ContactListener {
    * This operation runs after the engine solves the collision. Use this to determine handling of
    * two objects after they collide, based on their {@code UserData}. This can be used for sticky
    * projectiles.
+   *
    * @param contact passed by the @code WorldContactListener}. Perform checks on {@code contact
    * .getFixtureA()} and {@code contact.getFixtureB()}.
-   * @param contactImpulse gives information about the impulse given to solve the collision. A
-   * very large impulse means the two {@code Fixtures} had a large overlap.
+   * @param contactImpulse gives information about the impulse given to solve the collision. A very
+   * large impulse means the two {@code Fixtures} had a large overlap.
    */
   @Override
   public void postSolve(Contact contact, ContactImpulse contactImpulse) {
@@ -84,6 +89,7 @@ public class WorldContactListener implements ContactListener {
 
   /**
    * Add a {@code ContactOperation} to the {@code HashMap} of those to run.
+   *
    * @param name the name to refer to the {@code ContactOperation} by.
    * @param contactOperation the {@code ContactOperation}.
    */
@@ -93,6 +99,7 @@ public class WorldContactListener implements ContactListener {
 
   /**
    * Remove a {@code ContactOperation} from the {@code HashMap} of those to run.
+   *
    * @param name the name used to refer to the {@code ContactOperation}.
    */
   public void removeContactOperation(String name) {

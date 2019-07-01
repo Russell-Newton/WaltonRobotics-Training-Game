@@ -1,8 +1,9 @@
 package utilities.metadata;
 
 /**
- * {@code EnhancedBooleans} are like a {@code Boolean Object}, but they observe rising and
- * falling edge states.
+ * {@code EnhancedBooleans} are like a {@code Boolean Object}, but they observe rising and falling
+ * edge states.
+ *
  * @author Marius Juston
  */
 public class EnhancedBoolean {
@@ -34,6 +35,7 @@ public class EnhancedBoolean {
 
   /**
    * Set the value of the {@code EnhancedBoolean}.
+   *
    * @param newValue the value to set it to.
    */
   public void set(boolean newValue) {

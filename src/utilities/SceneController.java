@@ -36,6 +36,8 @@ public class SceneController {
    * @throws IOException if it cannot load the .fxml file at the given path.
    */
   public void addScreen(String name, String fxmlPath) throws IOException {
+    System.out.println("Loading controller " + name + "...");
+
     if (!filePathMap.containsKey(name)) {
       filePathMap.put(name, fxmlPath);
     }
@@ -47,6 +49,8 @@ public class SceneController {
     GameController controller = fxmlLoader.getController();
     controller.pauseExecutionTimeline();
     controllerMap.put(name, controller);
+
+    System.out.println("Controller " + name + " has been loaded and paused.\n\n\n\n\n");
   }
 
   /**
@@ -55,7 +59,12 @@ public class SceneController {
    * @param name the name of the screen setup to be removed.
    */
   public void removeScreen(String name) {
+    System.out.println("Removing controller " + name + "...");
+
     screenMap.remove(name);
+    controllerMap.remove(name);
+
+    System.out.println("Controller " + name + " has been removed.\n");
   }
 
   /**
@@ -64,10 +73,14 @@ public class SceneController {
    * @param name the name of the screen setup to be loaded.
    */
   public void activate(String name) {
+    System.out.println("Activating controller " + name + "...");
+
     pauseCurrentControllerTimeline();
     main.setRoot(screenMap.get(name));
     currentController = controllerMap.get(name);
     resumeCurrentControllerTimeline();
+
+    System.out.println("Controller " + name + " has been activated.\n");
   }
 
   /**
@@ -93,7 +106,11 @@ public class SceneController {
    */
   private void pauseCurrentControllerTimeline() {
     if (currentController != null) {
+      System.out.println("Pausing the current controller...");
       currentController.pauseExecutionTimeline();
+      System.out.println("The current controller has been paused.\n");
+    } else {
+      System.out.println("There is no current controller to pause.\n");
     }
   }
 
@@ -102,7 +119,11 @@ public class SceneController {
    */
   private void resumeCurrentControllerTimeline() {
     if (currentController != null) {
+      System.out.println("Resuming the current controller...");
       currentController.resumeExecutionTimeline();
+      System.out.println("The current controller has been resumed.\n");
+    } else {
+      System.out.println("There is no current controller to resume.\n");
     }
   }
 
@@ -114,6 +135,7 @@ public class SceneController {
    * @throws IOException if it cannot reload the .fxml file at the previously given path.
    */
   private void resetController(String name) throws IOException {
+    System.out.println("Resetting controller " + name + "...");
     screenMap.remove(name);
     controllerMap.remove(name);
     addScreen(name, filePathMap.get(name));

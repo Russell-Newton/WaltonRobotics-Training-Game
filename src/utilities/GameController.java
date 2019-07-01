@@ -5,6 +5,10 @@ import static utilities.metadata.StaticUtilities.GRAVITY_ACCELERATION;
 import static utilities.metadata.StaticUtilities.POSITION_ITERATIONS;
 import static utilities.metadata.StaticUtilities.VELOCITY_ITERATIONS;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -80,7 +84,25 @@ public abstract class GameController {
    * Adds obstacles to the controller on startup.
    */
   private void createObstacles() {
-    obstacles.add(new Obstacle(this, 30, 40, 50, 10, 0));
+//    obstacles.add(new Obstacle(this, 30, 40, 50, 10, 0));
+    createObstaclesFromFile("/assets/Obstacles.txt");
+  }
+
+  protected void createObstaclesFromFile(String filePath) {
+    try {
+      String absolutePath = new File("").getAbsolutePath();
+      BufferedReader br = new BufferedReader(new FileReader(absolutePath +
+          "\\src" + filePath));
+      String line;
+      while ((line = br.readLine()) != null) {
+        if (!line.startsWith("*") && !line.isEmpty()) {
+          obstacles.add(Obstacle.fromString(this, line));
+        }
+      }
+    } catch (IOException e) {
+      System.out.println("Obstacle file at " + filePath + " cannot be opened.");
+      e.printStackTrace();
+    }
   }
 
   /**

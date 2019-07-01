@@ -9,17 +9,13 @@ import static utilities.metadata.StaticUtilities.DEFAULT_PLAYER_RESTITUTION;
 import static utilities.metadata.StaticUtilities.DEFAULT_PLAYER_START_X;
 import static utilities.metadata.StaticUtilities.DEFAULT_PLAYER_START_Y;
 import static utilities.metadata.StaticUtilities.DEFAULT_PLAYER_WIDTH;
-import static utilities.metadata.StaticUtilities.IMAGE_SPRITE_SCALE;
 import static utilities.metadata.StaticUtilities.JUMP_COUNT;
 import static utilities.metadata.StaticUtilities.JUMP_VECTOR;
 import static utilities.metadata.StaticUtilities.RUN_VECTOR;
+import static utilities.metadata.StaticUtilities.STOP_HORIZONTAL_MOTION_ON_KEY_RELEASE;
 import static utilities.metadata.StaticUtilities.WALK_VECTOR;
 import static utilities.metadata.StaticUtilities.scene;
 
-import utilities.metadata.ContactOperation;
-import utilities.metadata.KeyBind;
-import utilities.metadata.KeyBind.KeyBindHandler;
-import utilities.metadata.UserData;
 import java.util.HashMap;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
@@ -27,12 +23,13 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.ImagePattern;
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.collision.Manifold;
-import org.jbox2d.collision.shapes.PolygonShape;
-import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.Fixture;
-import org.jbox2d.dynamics.FixtureDef;
 import org.jbox2d.dynamics.contacts.Contact;
+import utilities.metadata.ContactOperation;
+import utilities.metadata.KeyBind;
+import utilities.metadata.KeyBind.KeyBindHandler;
+import utilities.metadata.UserData;
 
 /**
  * @author Russell Newton
@@ -52,9 +49,8 @@ public class Player extends Obstacle {
    * @param startY the starting y coordinate of the corresponding physics body.
    */
   public Player(GameController controller, Image sprite, float startX, float startY) {
-    super(controller, startX, startY, (float) sprite.getWidth() * IMAGE_SPRITE_SCALE,
-        (float) sprite.getHeight() * IMAGE_SPRITE_SCALE, DEFAULT_PLAYER_ANGLE,
-        new ImagePattern(sprite), BodyType.DYNAMIC);
+    super(controller, startX, startY, DEFAULT_PLAYER_WIDTH, DEFAULT_PLAYER_HEIGHT,
+        DEFAULT_PLAYER_ANGLE, new ImagePattern(sprite), BodyType.DYNAMIC);
   }
 
   /**
@@ -119,10 +115,27 @@ public class Player extends Obstacle {
     for (KeyBind keyBind : keyBinds.values()) {
       keyBind.handle();
     }
+
+    if (body.getLinearVelocity().x > 0) {
+      MotionState.MOVING_RIGHT.set(true);
+    }
+    if (body.getLinearVelocity().x < 0) {
+      MotionState.MOVING_LEFT.set(true);
+    }
+    if (body.getLinearVelocity().y > 0) {
+      MotionState.JUMPING.set(true);
+    }
+    if (body.getLinearVelocity().y < 0) {
+      MotionState.FALLING.set(true);
+    }
+    if (body.getLinearVelocity().x == 0 && body.getLinearVelocity().y == 0) {
+      MotionState.STANDING.set(true);
+    }
   }
 
   /**
    * Sets the {@code KeyBind} for jumping.
+   *
    * @param keyCode the {@code KeyCode} of the key to use for jumping.
    */
   public void setJumpKey(KeyCode keyCode) {
@@ -151,6 +164,7 @@ public class Player extends Obstacle {
 
   /**
    * Sets the {@code KeyBind} for walking right.
+   *
    * @param keyCode the {@code KeyCode} of the key to use for walking right.
    */
   public void setWalkRightKey(KeyCode keyCode) {
@@ -167,6 +181,8 @@ public class Player extends Obstacle {
 
       @Override
       public void handleFallingEdge() {
+        if(STOP_HORIZONTAL_MOTION_ON_KEY_RELEASE)
+        body.getLinearVelocity().x = 0;
       }
 
       @Override
@@ -178,6 +194,7 @@ public class Player extends Obstacle {
 
   /**
    * Sets the {@code KeyBind} for walking left.
+   *
    * @param keyCode the {@code KeyCode} of the key to use for walking left.
    */
   public void setWalkLeftKey(KeyCode keyCode) {
@@ -194,6 +211,8 @@ public class Player extends Obstacle {
 
       @Override
       public void handleFallingEdge() {
+        if(STOP_HORIZONTAL_MOTION_ON_KEY_RELEASE)
+          body.getLinearVelocity().x = 0;
       }
 
       @Override
@@ -205,6 +224,7 @@ public class Player extends Obstacle {
 
   /**
    * Sets the {@code KeyBind} for sprinting.
+   *
    * @param keyCode the {@code KeyCode} of the key to use for sprinting.
    */
   public void setRunKey(KeyCode keyCode) {
@@ -231,9 +251,10 @@ public class Player extends Obstacle {
   }
 
   /**
-   * Implements a {@code KeyBind} by adding it to the {@code HashMap} of currently activated
-   * {@code KeyBinds} and creating {@code EventHandlers} to enable and disable the {@code KeyBind
-   * 's} status {@code EnhancedBoolean}.
+   * Implements a {@code KeyBind} by adding it to the {@code HashMap} of currently activated {@code
+   * KeyBinds} and creating {@code EventHandlers} to enable and disable the {@code KeyBind 's}
+   * status {@code EnhancedBoolean}.
+   *
    * @param name the name of the {@code KeyBind}.
    * @param keyBind the {@code KeyBind} to implement.
    */
@@ -253,8 +274,8 @@ public class Player extends Obstacle {
   }
 
   /**
-   * Make the player jump. Place this method in the {@code handleRisingEdge()} method of your
-   * {@code KeyBind}. You can continue to jump as long as you have not exceeded {@code jumpCount}.
+   * Make the player jump. Place this method in the {@code handleRisingEdge()} method of your {@code
+   * KeyBind}. You can continue to jump as long as you have not exceeded {@code jumpCount}.
    */
   private void jump() {
     if (jumpCount > 0) {
@@ -265,23 +286,23 @@ public class Player extends Obstacle {
   }
 
   /**
-   * Make the player walk. Place this method in the {@code handlePeriodic()} method of your
-   * {@code KeyBind}. Place a horizontal impulse command in the {@code handleRisingEdge()} method.
-   * If {@code isRunning} is true, this method will make the player run.
+   * Make the player walk. Place this method in the {@code handlePeriodic()} method of your {@code
+   * KeyBind}. Place a horizontal impulse command in the {@code handleRisingEdge()} method. If
+   * {@code isRunning} is true, this method will make the player run.
+   *
    * @param isRight whether or not the direction of the walking is to the right.
    */
   private void walk(boolean isRight) {
     if (isRunning) {
-      if (isRight) {
+      if (isRight && !MotionState.ON_WALL_RIGHT.get()) {
         body.getLinearVelocity().x = RUN_VECTOR.x;
-      } else {
+      } else if (!MotionState.ON_WALL_LEFT.get()) {
         body.getLinearVelocity().x = -RUN_VECTOR.x;
-
       }
     } else {
-      if (isRight) {
+      if (isRight && !MotionState.ON_WALL_RIGHT.get()) {
         body.getLinearVelocity().x = WALK_VECTOR.x;
-      } else {
+      } else if (!MotionState.ON_WALL_LEFT.get()) {
         body.getLinearVelocity().x = -WALK_VECTOR.x;
       }
     }
@@ -297,6 +318,7 @@ public class Player extends Obstacle {
 
   @Override
   protected void createWorldContactOperations() {
+    //Create jump reset operation
     ContactOperation resetJump = new ContactOperation() {
       @Override
       public void beginContact(Contact contact) {
@@ -305,13 +327,11 @@ public class Player extends Obstacle {
         Fixture fixtureB = contact.getFixtureB();
 
         if (fixtureA.getUserData() != null &&
-            ((UserData) fixtureA.getUserData()).get("fixture").equals("foot")) {
+            ((UserData) fixtureA.getUserData()).get("playerSensor").equals("bottom")) {
           resetJumpCount();
-          System.out.println("Can now jump.");
         } else if (fixtureB.getUserData() != null &&
-            ((UserData) fixtureB.getUserData()).get("fixture").equals("foot")) {
+            ((UserData) fixtureB.getUserData()).get("playerSensor").equals("bottom")) {
           resetJumpCount();
-          System.out.println("Can now jump.");
         }
       }
 
@@ -330,29 +350,104 @@ public class Player extends Obstacle {
 
       }
     };
-    controller.contactListener.addContactOperation("Reset Player Jump", resetJump);
+
+    //TODO fix the stutter
+    //Create ON_WALL_RIGHT set operation
+    ContactOperation onWallRightSet = new ContactOperation() {
+      @Override
+      public void beginContact(Contact contact) {
+        Fixture fixtureA = contact.getFixtureA();
+        Fixture fixtureB = contact.getFixtureB();
+
+        //Right side is colliding with a default obstacle
+        if ((((UserData) fixtureA.getUserData()).get("playerSensor").equals("right") &&
+            ((UserData) fixtureB.getUserData()).get("obstacleType").equals("default")) ||
+            (((UserData) fixtureB.getUserData()).get("playerSensor").equals("right") &&
+                ((UserData) fixtureA.getUserData()).get("obstacleType").equals("default"))) {
+          MotionState.ON_WALL_RIGHT.set(true);
+        }
+      }
+
+      @Override
+      public void endContact(Contact contact) {
+        Fixture fixtureA = contact.getFixtureA();
+        Fixture fixtureB = contact.getFixtureB();
+
+        if ((((UserData) fixtureA.getUserData()).get("playerSensor").equals("right") &&
+            ((UserData) fixtureB.getUserData()).get("obstacleType").equals("default")) ||
+            (((UserData) fixtureB.getUserData()).get("playerSensor").equals("right") &&
+                ((UserData) fixtureA.getUserData()).get("obstacleType").equals("default"))) {
+          MotionState.ON_WALL_RIGHT.set(false);
+        }
+      }
+
+      @Override
+      public void preSolve(Contact contact, Manifold manifold) {
+
+      }
+
+      @Override
+      public void postSolve(Contact contact, ContactImpulse contactImpulse) {
+
+      }
+    };
+
+    //Create ON_WALL_LEFT set operation
+    ContactOperation onWallLeftSet = new ContactOperation() {
+      @Override
+      public void beginContact(Contact contact) {
+        Fixture fixtureA = contact.getFixtureA();
+        Fixture fixtureB = contact.getFixtureB();
+
+        //Left side is colliding with a default obstacle
+        if ((((UserData) fixtureA.getUserData()).get("playerSensor").equals("left") &&
+            ((UserData) fixtureB.getUserData()).get("obstacleType").equals("default")) ||
+            (((UserData) fixtureB.getUserData()).get("playerSensor").equals("left") &&
+                ((UserData) fixtureA.getUserData()).get("obstacleType").equals("default"))) {
+          MotionState.ON_WALL_LEFT.set(true);
+        }
+      }
+
+      @Override
+      public void endContact(Contact contact) {
+        Fixture fixtureA = contact.getFixtureA();
+        Fixture fixtureB = contact.getFixtureB();
+
+        if ((((UserData) fixtureA.getUserData()).get("playerSensor").equals("left") &&
+            ((UserData) fixtureB.getUserData()).get("obstacleType").equals("default")) ||
+            (((UserData) fixtureB.getUserData()).get("playerSensor").equals("left") &&
+                ((UserData) fixtureA.getUserData()).get("obstacleType").equals("default"))) {
+          MotionState.ON_WALL_LEFT.set(false);
+        }
+      }
+
+      @Override
+      public void preSolve(Contact contact, Manifold manifold) {
+
+      }
+
+      @Override
+      public void postSolve(Contact contact, ContactImpulse contactImpulse) {
+
+      }
+    };
+
+    controller.contactListener.addContactOperation("resetJump", resetJump);
+    controller.contactListener.addContactOperation("onWallRightSet", onWallRightSet);
+    controller.contactListener.addContactOperation("onWallLeftSet", onWallLeftSet);
   }
 
   @Override
   protected void setFixtureData() {
-    body.getFixtureList().setDensity(DEFAULT_PLAYER_MASS / (width * height));
-    body.getFixtureList().setFriction(DEFAULT_PLAYER_FRICTION);
-    body.getFixtureList().setRestitution(DEFAULT_PLAYER_RESTITUTION);
-    body.setFixedRotation(true);
+    Fixture primaryFixture = body.getFixtureList();
+    primaryFixture.setDensity(DEFAULT_PLAYER_MASS / (width * height));
+    primaryFixture.setUserData(new UserData().addUserData("obstacleType", "default"));
+    primaryFixture.setFriction(DEFAULT_PLAYER_FRICTION);
+    primaryFixture.setRestitution(DEFAULT_PLAYER_RESTITUTION);
     body.resetMassData();
+    body.setFixedRotation(true);
 
-    //Create the foot sensor
-    PolygonShape footSensorShape = new PolygonShape();
-    footSensorShape.set(new Vec2[]{
-        new Vec2(0, -height + 0.2f), new Vec2(width, -height + 0.2f),
-        new Vec2(width, -height - 0.2f), new Vec2(0, -height - 0.2f)
-    }, 4);
-
-    FixtureDef footSensor = new FixtureDef();
-    footSensor.shape = footSensorShape;
-    footSensor.isSensor = true;
-    footSensor.userData = new UserData().addUserData("fixture", "foot");
-    body.createFixture(footSensor);
+    createSideSensors("playerSensor");
   }
 
   @Override
@@ -364,5 +459,119 @@ public class Player extends Obstacle {
     toString.append(fixturesToString());
     toString.append("  ]\n]");
     return toString.toString();
+  }
+
+  public enum MotionState {
+    STANDING {
+      @Override
+      public void set(boolean value) {
+        active = value;
+        if (value) {
+          MOVING_RIGHT.set(false);
+          MOVING_LEFT.set(false);
+          JUMPING.set(false);
+          FALLING.set(false);
+        }
+      }
+
+      @Override
+      public boolean get() {
+        return active;
+      }
+    },
+    MOVING_RIGHT {
+      @Override
+      public void set(boolean value) {
+        active = value;
+        if (value) {
+          MOVING_LEFT.set(false);
+          STANDING.set(false);
+        }
+      }
+
+      @Override
+      public boolean get() {
+        return active;
+      }
+    },
+    MOVING_LEFT {
+      @Override
+      public void set(boolean value) {
+        active = value;
+        if (value) {
+          MOVING_RIGHT.set(false);
+          STANDING.set(false);
+        }
+      }
+
+      @Override
+      public boolean get() {
+        return active;
+      }
+    },
+    JUMPING {
+      @Override
+      public void set(boolean value) {
+        active = value;
+        if (value) {
+          FALLING.set(false);
+          STANDING.set(false);
+        }
+      }
+
+      @Override
+      public boolean get() {
+        return active;
+      }
+    },
+    FALLING {
+      @Override
+      public void set(boolean value) {
+        active = value;
+        if (value) {
+          JUMPING.set(false);
+          STANDING.set(false);
+        }
+      }
+
+      @Override
+      public boolean get() {
+        return active;
+      }
+    },
+    ON_WALL_RIGHT {
+      @Override
+      public void set(boolean value) {
+        active = value;
+        if (value) {
+          MOVING_RIGHT.set(false);
+        }
+      }
+
+      @Override
+      public boolean get() {
+        return active;
+      }
+    },
+    ON_WALL_LEFT {
+      @Override
+      public void set(boolean value) {
+        active = value;
+        if (value) {
+          MOVING_LEFT.set(false);
+        }
+      }
+
+      @Override
+      public boolean get() {
+        return active;
+      }
+    };
+
+    protected boolean active = false;
+
+    public abstract void set(boolean value);
+
+    public abstract boolean get();
   }
 }

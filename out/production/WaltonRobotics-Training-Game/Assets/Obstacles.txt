@@ -1,0 +1,22 @@
+* Your obstacles file should contain lines that adhere to the following format:
+* "X:nnn,Y:nnn,W:nnn,H:nnn,A:nnn,P:nnn",
+* where each capital letter denotes {@code Obstacle} parameters:<br>
+*   X: = startX
+*   Y: = startY
+*   W: = width
+*   H: = height
+*   A: = angle (degrees)  --  This is not working like it should right now and will be overridden to be 0.
+*   P: = file or web location of the sprite (If an error in this step occurs, the color will
+*   be the default Color)
+*
+* Any lines that start with an asterisk ("*") will be ignored. Any empty lines will be ignored.
+
+* Screen Boundaries
+X:0,Y:4,W:170.7,H:1,A:0,P:
+X:0,Y:100,W:170.7,H:1,A:0,P:
+X:-1,Y:100,W:1,H:96,A:0,P:
+X:170,Y:100,W:1,H:96,A:0,P:
+
+* Normal Obstacles
+X:30,Y:30,W:100,H:15,A:0,P:https://lh3.googleusercontent.com/V1SIWlOBXWXP0bpP0Sp9sLjDSgx5cxtyXx8KBjL15193a7OIbUetH0kZBIiOTy4bk0AjaN0vWJChcUZ7uUVPCg
+X:70,Y:45,W:50,H:15,A:0,P:https://lh3.googleusercontent.com/V1SIWlOBXWXP0bpP0Sp9sLjDSgx5cxtyXx8KBjL15193a7OIbUetH0kZBIiOTy4bk0AjaN0vWJChcUZ7uUVPCg

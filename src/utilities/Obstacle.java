@@ -4,6 +4,7 @@ import static utilities.metadata.StaticUtilities.DEFAULT_OBSTACLE_FILL;
 import static utilities.metadata.StaticUtilities.DEFAULT_OBSTACLE_FRICTION;
 import static utilities.metadata.StaticUtilities.DEFAULT_OBSTACLE_MASS;
 import static utilities.metadata.StaticUtilities.DEFAULT_OBSTACLE_RESTITUTION;
+import static utilities.metadata.StaticUtilities.SIDE_SENSOR_OFFSET;
 import static utilities.metadata.StaticUtilities.toJB2DAngle;
 import static utilities.metadata.StaticUtilities.toJFXAngle;
 import static utilities.metadata.StaticUtilities.toPixelHeight;
@@ -11,8 +12,8 @@ import static utilities.metadata.StaticUtilities.toPixelPosX;
 import static utilities.metadata.StaticUtilities.toPixelPosY;
 import static utilities.metadata.StaticUtilities.toPixelWidth;
 
-import utilities.metadata.StaticUtilities;
-import utilities.metadata.UserData;
+import javafx.scene.image.Image;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Rotate;
@@ -23,9 +24,12 @@ import org.jbox2d.dynamics.BodyDef;
 import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.Fixture;
 import org.jbox2d.dynamics.FixtureDef;
+import utilities.metadata.StaticUtilities;
+import utilities.metadata.UserData;
 
 /**
  * {@code Obstacles} are the non-{@code Player} bodies in the application.
+ *
  * @author Russell Newton
  **/
 public class Obstacle {
@@ -49,7 +53,8 @@ public class Obstacle {
    * @param startY the starting y coordinate of the corresponding physics body.
    * @param width the width of the corresponding physics body.
    * @param height the height of the corresponding physics body.
-   * @param angle the starting angle of the corresponding physics body..
+   * @param angle the starting angle of the corresponding physics body. Because it's not working
+   * right, this is overridden to 0.
    * @param fill the fill of the corresponding screen mask.
    * @param bodyType the {@code BodyType} of the corresponding physics body.
    */
@@ -59,7 +64,7 @@ public class Obstacle {
     this.startY = startY;
     this.width = width;
     this.height = height;
-    this.angle = angle;
+    this.angle = /*angle*/ 0; //TODO
 
     this.controller = controller;
 
@@ -77,14 +82,15 @@ public class Obstacle {
   }
 
   /**
-   * Create a new {@code obstacle} with the a {@code KINEMATIC BodyType}.
+   * Create a new {@code Obstacle} with the a {@code KINEMATIC BodyType}.
    *
    * @param controller the controller this {@code Obstacle} belongs to.
    * @param startX the starting x coordinate of the corresponding physics body.
    * @param startY the starting y coordinate of the corresponding physics body.
    * @param width the width of the corresponding physics body.
    * @param height the height of the corresponding physics body.
-   * @param angle the starting angle of the corresponding physics body..
+   * @param angle the starting angle of the corresponding physics body. Because it's not working
+   * right, this is overridden to 0.
    * @param fill the fill of the corresponding screenMask.
    */
   public Obstacle(GameController controller, float startX, float startY, float width,
@@ -93,19 +99,55 @@ public class Obstacle {
   }
 
   /**
-   * Create a new {@code obstacle} with the a {@code KINEMATIC BodyType} and default fill.
+   * Create a new {@code Obstacle} with the a {@code KINEMATIC BodyType} and default fill.
    *
    * @param controller the controller this {@code Obstacle} belongs to.
    * @param startX the starting x coordinate of the corresponding physics body.
    * @param startY the starting y coordinate of the corresponding physics body.
    * @param width the width of the corresponding physics body.
    * @param height the height of the corresponding physics body.
-   * @param angle the starting angle of the corresponding physics body..
+   * @param angle the starting angle of the corresponding physics body. Because it's not working
+   * right, this is overridden to 0.
    */
   public Obstacle(GameController controller, float startX, float startY, float width,
       float height, float angle) {
     this(controller, startX, startY, width, height, angle, DEFAULT_OBSTACLE_FILL,
         BodyType.KINEMATIC);
+  }
+
+  /**
+   * Create a new {@code Object} from a {@code String}. It should be formatted as follows:<br><br>
+   * "X:nnn,Y:nnn,W:nnn,H:nnn,A:nnn,P:nnn", <br><br> where each capital letter denotes {@code
+   * Obstacle} parameters:<br> X: = startX<br> Y: = startY<br> W: = width<br> H: = height<br> A: =
+   * angle (degrees)  --  This is not working like it should right now and will be overridden to be
+   * 0.<br> P: = file or web location of the sprite (If an error in this step occurs, the color will
+   * be the default Color)
+   *
+   * @param controller the controller this {@code Obstacle} belongs.
+   * @param paramString a string containing the above format to create the {@code Obstacle} from.
+   */
+  public static Obstacle fromString(GameController controller, String paramString) {
+    System.out.println("Creating obstacle from: " + paramString);
+    String[] parameters = paramString.split(",?[XYWHAP]:");
+    try {
+      float startX = Float.parseFloat(parameters[1]);
+      float startY = Float.parseFloat(parameters[2]);
+      float width = Float.parseFloat(parameters[3]);
+      float height = Float.parseFloat(parameters[4]);
+      float angle = /*Float.parseFloat(parameters[5])*/ 0;
+      Paint paint;
+      try {
+        paint = new ImagePattern(new Image(parameters[6]));
+      } catch (NullPointerException | IndexOutOfBoundsException | IllegalArgumentException e) {
+        paint = DEFAULT_OBSTACLE_FILL;
+      }
+      return new Obstacle(controller, startX, startY, width, height, angle, paint);
+    } catch (NumberFormatException | IndexOutOfBoundsException | NullPointerException e) {
+      System.out.println("The input string was not in the correct format. See the Stack Trace for"
+          + " more information.");
+      e.printStackTrace();
+      return null;
+    }
   }
 
   /**
@@ -134,9 +176,10 @@ public class Obstacle {
 
     body = controller.world.createBody(bd);
     body.createFixture(fd);
-    setFixtureData();
     body.setUserData(new UserData().addUserData("obstacle", this));
+    setFixtureData();
 
+    //TODO this still doesn't work right
     //Apply starting rotation
     float rotation = toJB2DAngle(angle);
     while (Math.abs(body.getAngle() - rotation) >= StaticUtilities.ANGLE_ROTATION_TOLERANCE) {
@@ -190,18 +233,37 @@ public class Obstacle {
 
   /**
    * This method is run as a part of the {@code initBody()} method. Place {@code Fixture} field
-   * parameters and any new {@code Fixtures} in here. Override this method in any subclasses.
+   * parameters and any new {@code Fixtures} in here. Override this method in any subclasses. The
+   * default method code is as follows: <br><br> {@code Fixture primaryFixture =
+   * body.getFixtureList();} <br> {@code primaryFixture.setUserData(new
+   * UserData().addUserData("obstacleType", "default"));}<br> {@code primaryFixture.setDensity(DEFAULT_OBSTACLE_MASS
+   * / (width * height));}
+   * <br> {@code primaryFixture.setFriction(DEFAULT_OBSTACLE_FRICTION);} <br> {@code
+   * primaryFixture.setRestitution(DEFAULT_OBSTACLE_RESTITUTION);} <br> {@code
+   * body.resetMassData();} <br><br> The {@code body .getFixtureList()} retrieves the first {@code
+   * Fixture} out of those bound to this {@code Obstacle's} physics body. Every time this method is
+   * overrode, the {@code addUserData()} method should be modified to set the correct obstacle
+   * fixture type.To manipulate the next one in the list, use the method {@code
+   * primaryFixture.getNext()}.<br> Density is obvious. It is used to calculate the body's
+   * weight.<br> Friction should be a float between 0 and 1. During a collision, the lower of the
+   * two bodies' friction values is used. The default for {@code Obstacles} and {@code Players} is
+   * 10, to keep {@code Players} them from sliding when they stop moving. <br> Restitution is the
+   * "bounciness" of the body. During a collision, the higher of the two bodies' restitution values
+   * is used. <br> The method {@code body.resetMassData()} must be called every time the density is
+   * changed.
    */
   protected void setFixtureData() {
-    body.getFixtureList().setDensity(DEFAULT_OBSTACLE_MASS / (width * height));
-    body.getFixtureList().setFriction(DEFAULT_OBSTACLE_FRICTION);
-    body.getFixtureList().setRestitution(DEFAULT_OBSTACLE_RESTITUTION);
+    Fixture primaryFixture = body.getFixtureList();
+    primaryFixture.setUserData(new UserData().addUserData("obstacleType", "default"));
+    primaryFixture.setDensity(DEFAULT_OBSTACLE_MASS / (width * height));
+    primaryFixture.setFriction(DEFAULT_OBSTACLE_FRICTION);
+    primaryFixture.setRestitution(DEFAULT_OBSTACLE_RESTITUTION);
     body.resetMassData();
   }
 
   /**
-   * Use this method to create and implement and {@code ContactOperations} that will operate in
-   * the {@code GameController's WorldContactListener}. Pass the {@code ContactOperations} into the
+   * Use this method to create and implement and {@code ContactOperations} that will operate in the
+   * {@code GameController's WorldContactListener}. Pass the {@code ContactOperations} into the
    * {@code controller.contactListener.addContactOperation} method. Override this method in any
    * subclasses.
    */
@@ -211,10 +273,75 @@ public class Obstacle {
 
   /**
    * Set the sprite of this {@code Obstacle}.
+   *
    * @param sprite the sprite {@code Paint}.
    */
   public void setSprite(Paint sprite) {
     screenMask.setFill(sprite);
+  }
+
+  /**
+   * This method creates sensors on all four sides of the {@code Obstacle's} physics body. Run this
+   * at the end of the {@code setFixtureData()} method.
+   *
+   * @param sensorKey the key to refer to the sensors as in {@code UserData}
+   */
+  protected void createSideSensors(String sensorKey) {
+    //Create the bottom sensor
+    PolygonShape bottomSensorShape = new PolygonShape();
+    bottomSensorShape.set(new Vec2[]{
+        new Vec2(SIDE_SENSOR_OFFSET, -height + SIDE_SENSOR_OFFSET),
+        new Vec2(width - SIDE_SENSOR_OFFSET, -height + SIDE_SENSOR_OFFSET),
+        new Vec2(width - SIDE_SENSOR_OFFSET, -height - SIDE_SENSOR_OFFSET),
+        new Vec2(SIDE_SENSOR_OFFSET, -height - SIDE_SENSOR_OFFSET)
+    }, 4);
+    FixtureDef bottomSensor = new FixtureDef();
+    bottomSensor.shape = bottomSensorShape;
+    bottomSensor.isSensor = true;
+    bottomSensor.userData = new UserData().addUserData(sensorKey, "bottom");
+    body.createFixture(bottomSensor);
+
+    //Create the left sensor
+    PolygonShape leftSensorShape = new PolygonShape();
+    leftSensorShape.set(new Vec2[]{
+        new Vec2(-SIDE_SENSOR_OFFSET, -height + SIDE_SENSOR_OFFSET),
+        new Vec2(SIDE_SENSOR_OFFSET, -height + SIDE_SENSOR_OFFSET),
+        new Vec2(SIDE_SENSOR_OFFSET, -SIDE_SENSOR_OFFSET),
+        new Vec2(-SIDE_SENSOR_OFFSET, -SIDE_SENSOR_OFFSET)
+    }, 4);
+    FixtureDef leftSensor = new FixtureDef();
+    leftSensor.shape = leftSensorShape;
+    leftSensor.isSensor = true;
+    leftSensor.userData = new UserData().addUserData(sensorKey, "left");
+    body.createFixture(leftSensor);
+
+    //Create the right sensor
+    PolygonShape rightSensorShape = new PolygonShape();
+    rightSensorShape.set(new Vec2[]{
+        new Vec2(width - SIDE_SENSOR_OFFSET, -height + SIDE_SENSOR_OFFSET),
+        new Vec2(width + SIDE_SENSOR_OFFSET, -height + SIDE_SENSOR_OFFSET),
+        new Vec2(width + SIDE_SENSOR_OFFSET, -SIDE_SENSOR_OFFSET),
+        new Vec2(width - SIDE_SENSOR_OFFSET, -SIDE_SENSOR_OFFSET)
+    }, 4);
+    FixtureDef rightSensor = new FixtureDef();
+    rightSensor.shape = rightSensorShape;
+    rightSensor.isSensor = true;
+    rightSensor.userData = new UserData().addUserData(sensorKey, "right");
+    body.createFixture(rightSensor);
+
+    //Create the top sensor
+    PolygonShape topSensorShape = new PolygonShape();
+    topSensorShape.set(new Vec2[]{
+        new Vec2(SIDE_SENSOR_OFFSET, SIDE_SENSOR_OFFSET),
+        new Vec2(width - SIDE_SENSOR_OFFSET, SIDE_SENSOR_OFFSET),
+        new Vec2(width - SIDE_SENSOR_OFFSET, -SIDE_SENSOR_OFFSET),
+        new Vec2(SIDE_SENSOR_OFFSET, -SIDE_SENSOR_OFFSET)
+    }, 4);
+    FixtureDef topSensor = new FixtureDef();
+    topSensor.shape = topSensorShape;
+    topSensor.isSensor = true;
+    topSensor.userData = new UserData().addUserData(sensorKey, "top");
+    body.createFixture(topSensor);
   }
 
   @Override
@@ -230,6 +357,7 @@ public class Obstacle {
 
   /**
    * Used in the {@code toString()} method.
+   *
    * @return a string containing all the {@code Fixture} vertices, formatted for the {@code
    * toString()} method.
    */

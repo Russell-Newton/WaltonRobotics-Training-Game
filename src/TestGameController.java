@@ -13,8 +13,8 @@ public class TestGameController extends GameController {
 
   @Override
   protected void init() {
-    System.out.println("Running test controller");
-    player = new Player(this);
+    player = new Player(this,
+        "https://www.seekpng.com/png/detail/223-2238252_image-result-for-mario-sprite-video-game-font.png");
     player.setJumpKey(SPACE);
     player.setWalkLeftKey(A);
     player.setWalkRightKey(D);

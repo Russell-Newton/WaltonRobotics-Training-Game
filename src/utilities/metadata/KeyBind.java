@@ -5,6 +5,7 @@ import javafx.scene.input.KeyCode;
 /**
  * {@code KeyBinds} should be created and passed in to the {@code Player implementKeyBind()} method
  * to function.
+ *
  * @author Russell Newton
  **/
 public class KeyBind {
@@ -15,10 +16,11 @@ public class KeyBind {
 
   /**
    * Create a new {@code KeyBind} from a {@code KeyCode} and {@code KeyBindHandler}.
-   * @param keyCode the {@code KeyCode} that will be used to trigger the different methods in
-   * {@code handler}.
-   * @param handler the {@code KeyBindHandler} that will run different functions based on the
-   * {@code status}.
+   *
+   * @param keyCode the {@code KeyCode} that will be used to trigger the different methods in {@code
+   * handler}.
+   * @param handler the {@code KeyBindHandler} that will run different functions based on the {@code
+   * status}.
    */
   public KeyBind(KeyCode keyCode, KeyBindHandler handler) {
     status = new EnhancedBoolean();

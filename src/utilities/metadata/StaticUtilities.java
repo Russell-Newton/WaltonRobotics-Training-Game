@@ -1,6 +1,5 @@
 package utilities.metadata;
 
-import utilities.SceneController;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
@@ -8,6 +7,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Screen;
 import org.jbox2d.common.Vec2;
+import utilities.SceneController;
 
 /**
  * A bunch of static constants and methods used in the application.
@@ -16,38 +16,45 @@ import org.jbox2d.common.Vec2;
  **/
 public class StaticUtilities {
 
-  public static final Rectangle2D PRIMARY_SCREEN_BOUNDS = Screen.getPrimary().getVisualBounds();
-  public static final float WIDTH = (float) PRIMARY_SCREEN_BOUNDS.getWidth();
-  public static final float HEIGHT = (float) PRIMARY_SCREEN_BOUNDS.getHeight();
-  public static final float JB_TO_JFX_FACTOR = 10.0f;   //Conversion factor from JBox2D to JavaFX
   //Physics engine constants
-  public static final float GRAVITY_ACCELERATION = -9.8f;
+  public static final float GRAVITY_ACCELERATION = -30.0f;  //-9.8 is crazy slow what heck
   public static final double FRAME_INTERVAL = 5.0;
   public static final int VELOCITY_ITERATIONS = 5;
   public static final int POSITION_ITERATIONS = 3;
+  //
   //Obstacle constants
+  //
   public static final float ANGLE_ROTATION_TOLERANCE = 0.0001f;
-  public static final Paint DEFAULT_OBSTACLE_FILL = Color.RED;
+  public static final Paint DEFAULT_OBSTACLE_FILL = Color.BLUE;
   public static final float DEFAULT_OBSTACLE_MASS = 1;
-  public static final float DEFAULT_OBSTACLE_FRICTION = 1;
+  public static final float DEFAULT_OBSTACLE_FRICTION = 10;
   public static final float DEFAULT_OBSTACLE_RESTITUTION = 0;
-  //Player sprite constants
-  public static final float DEFAULT_PLAYER_HEIGHT = 5f;
-  public static final float DEFAULT_PLAYER_WIDTH = 15f;
-  public static final float DEFAULT_PLAYER_ANGLE = 0f;
-  public static final float IMAGE_SPRITE_SCALE = 0.1f;
+  public static final float SIDE_SENSOR_OFFSET = 0.1f;
+  //
+  //Player constants
+  //
+  public static final float DEFAULT_PLAYER_HEIGHT = 8f;
+  public static final float DEFAULT_PLAYER_WIDTH = 5f;
+  public static final float DEFAULT_PLAYER_ANGLE = 0f;    //Changing this will do nothing
   public static final float DEFAULT_PLAYER_START_X = 48f;
   public static final float DEFAULT_PLAYER_START_Y = 75f;
   public static final Paint DEFAULT_PLAYER_FILL = Color.BLUE;
-  //Player motion constants
   public static final float DEFAULT_PLAYER_MASS = 1;
-  public static final float DEFAULT_PLAYER_FRICTION = 1;
+  public static final float DEFAULT_PLAYER_FRICTION = 10;
   public static final float DEFAULT_PLAYER_RESTITUTION = 0;
-  public static final Vec2 JUMP_VECTOR = new Vec2(0, 10f);
-  public static final Vec2 WALK_VECTOR = new Vec2(5f, 0);
-  public static final Vec2 RUN_VECTOR = new Vec2(10f, 0);
+  public static final Vec2 JUMP_VECTOR = new Vec2(0, 25f);
+  public static final Vec2 WALK_VECTOR = new Vec2(10f, 0);
+  public static final Vec2 RUN_VECTOR = new Vec2(20f, 0);
   public static final int JUMP_COUNT = 2;
+  public static final boolean STOP_HORIZONTAL_MOTION_ON_KEY_RELEASE = true;
+  //
   //Screen constants
+  //
+  public static final Rectangle2D PRIMARY_SCREEN_BOUNDS = Screen.getPrimary().getVisualBounds();
+  private static final float PRIMARY_SCREEN_BOUNDS_WIDTH = (float) PRIMARY_SCREEN_BOUNDS.getWidth();
+  private static final float PRIMARY_SCREEN_BOUNDS_HEIGHT =
+      (float) PRIMARY_SCREEN_BOUNDS.getHeight();
+  private static final float JB_TO_JFX_FACTOR = 10.0f;   //Conversion factor from JBox2D to JavaFX
   public static Scene scene = new Scene(new AnchorPane());
   public static SceneController sceneController = new SceneController(scene);
 
@@ -80,7 +87,7 @@ public class StaticUtilities {
    * @return JavaFX y coordinate.
    */
   public static float toPixelPosY(float posY) {
-    float y = HEIGHT - posY * JB_TO_JFX_FACTOR;
+    float y = PRIMARY_SCREEN_BOUNDS_HEIGHT - posY * JB_TO_JFX_FACTOR;
     return y;
   }
 
@@ -91,7 +98,7 @@ public class StaticUtilities {
    * @return JBox2D y coordinate.
    */
   public static float toPosY(float posY) {
-    float y = (HEIGHT - posY) / JB_TO_JFX_FACTOR;
+    float y = (PRIMARY_SCREEN_BOUNDS_HEIGHT - posY) / JB_TO_JFX_FACTOR;
     return y;
   }
 
