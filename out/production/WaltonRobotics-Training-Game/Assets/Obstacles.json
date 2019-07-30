@@ -1,0 +1,12 @@
+{
+  "obstacles" : {
+    "a": {
+      "x": 30,
+      "y": 30,
+      "width": 100,
+      "height": 15,
+      "angle": 0,
+      "sprite": "https://lh3.googleusercontent.com/V1SIWlOBXWXP0bpP0Sp9sLjDSgx5cxtyXx8KBjL15193a7OIbUetH0kZBIiOTy4bk0AjaN0vWJChcUZ7uUVPCg"
+    }
+  }
+}

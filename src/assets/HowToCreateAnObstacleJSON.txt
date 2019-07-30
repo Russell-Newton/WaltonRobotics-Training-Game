@@ -1,0 +1,27 @@
+Your standard obstacle JSON file will look like this:
+
+{
+  "obstacles": {
+    <obstacle name>: {
+      "type": <"static", "kinematic">,
+      "x": <start x>,
+      "y": <start y>,
+      "width": <width>,
+      "height": <height>,
+      "angle": <angle>,
+      "sprite": <path or link to desired sprite>        <-- If unspecified, defaults to static
+    },
+    ...
+  }
+}
+
+
+You need to have all your obstacles enclosed in the "obstacles" array.
+
+If "type" is set to kinematic, the following information is required:
+  "speed": <speed>,                                     <-- If unspecified, defaults to 1
+  "trajectory": [                                       <-- If unspecified, will not move
+    [x1, y1],                                           <-- At least two points required
+    [x2, y2],
+    ...
+  ]                                                     <-- Uses brackets instead of braces

@@ -344,6 +344,10 @@ public class Obstacle {
     body.createFixture(topSensor);
   }
 
+  public void deleteObstacle() {
+    controller.world.destroyBody(body);
+  }
+
   @Override
   public String toString() {
     StringBuilder toString = new StringBuilder(String.format("Obstacle:[%n  ScreenMask:[x:%f, "

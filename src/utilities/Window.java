@@ -41,7 +41,7 @@ public class Window extends Application {
    * @throws IOException if the .fxml file cannot be found
    */
   private void addScreens() throws IOException {
-    sceneController.addScreen("main", "/assets/fxml/BasicGameController.fxml");
+    sceneController.addScreen("basic", "/assets/fxml/BasicGameController.fxml");
     sceneController.addScreen("test", "/assets/fxml/TestGameController.fxml");
   }
 }

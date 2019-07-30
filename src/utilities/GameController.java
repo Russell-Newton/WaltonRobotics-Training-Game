@@ -9,7 +9,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.animation.Animation;
@@ -23,8 +26,11 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.util.Duration;
+import javafx.util.Pair;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.World;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 /**
  * @author Russell Newton
@@ -37,7 +43,7 @@ public abstract class GameController {
   World world;
   WorldContactListener contactListener;
   private Timeline executionTimeline;
-  private LinkedList<Obstacle> obstacles = new LinkedList<>();
+  private LinkedList<Pair<String, Obstacle>> obstacles = new LinkedList<>();
   private Paint backgroundPaint = Color.LIGHTBLUE;
 
   /**
@@ -74,32 +80,80 @@ public abstract class GameController {
   @FXML
   protected void initialize() {
     setBackground(backgroundPaint);
-    createObstacles();
+    createObstacles("/assets/Boundaries.json");
 
     init();
     executionTimeline.play();
   }
 
   /**
-   * Adds obstacles to the controller on startup.
+   * Adds obstacles to the controller.
+   * @param obstacleJSONFiles an array of {@code Obstacle} JSON files' relative locations.
    */
-  private void createObstacles() {
-//    obstacles.add(new Obstacle(this, 30, 40, 50, 10, 0));
-    createObstaclesFromFile("/assets/Obstacles.txt");
+  protected void createObstacles(String... obstacleJSONFiles) {
+//    createObstaclesFromJSON("/assets/Boundaries.json");
+//    createObstaclesFromJSON("/assets/Obstacles.json");
+    for(String location : obstacleJSONFiles) {
+      createObstaclesFromJSON(location);
+    }
   }
 
-  protected void createObstaclesFromFile(String filePath) {
+//  protected void createObstaclesFromFile(String filePath) {
+//    try {
+//      String absolutePath = new File("").getAbsolutePath();
+//      BufferedReader br = new BufferedReader(new FileReader(absolutePath +
+//          "\\src" + filePath));
+//      String line;
+//      while ((line = br.readLine()) != null) {
+//        if (!line.startsWith("*") && !line.isEmpty()) {
+//          obstacles.add(Obstacle.fromString(this, line));
+//        }
+//      }
+//    } catch (IOException e) {
+//      System.out.println("Obstacle file at " + filePath + " cannot be opened.");
+//      e.printStackTrace();
+//    }
+//  }
+
+  private String getObstacleStringFromJSONMap(Map obstacle) {
+    float x = Float.parseFloat("" + obstacle.get("x"));
+    float y = Float.parseFloat("" + obstacle.get("y"));
+    float width = Float.parseFloat("" + obstacle.get("width"));
+    float height = Float.parseFloat("" + obstacle.get("height"));
+    float angle = Float.parseFloat("" + obstacle.get("angle"));
+    String sprite = (String) obstacle.get("sprite");
+    if (sprite == null) {
+      sprite = "";
+    }
+
+    return String.format("X:%f,Y:%f,W:%f,H:%f,A:%f,P:%s",
+        x, y, width, height, angle, sprite);
+  }
+
+  protected void createObstaclesFromJSON(String filePath) {
     try {
       String absolutePath = new File("").getAbsolutePath();
-      BufferedReader br = new BufferedReader(new FileReader(absolutePath +
-          "\\src" + filePath));
-      String line;
-      while ((line = br.readLine()) != null) {
-        if (!line.startsWith("*") && !line.isEmpty()) {
-          obstacles.add(Obstacle.fromString(this, line));
+      JSONObject json = (JSONObject) (new JSONParser().parse(
+          new FileReader(absolutePath + "\\src" + filePath)));
+      
+      Map staticObstacles = (Map) json.get("obstacles");
+      Iterator<Entry> iterator = staticObstacles.entrySet().iterator();
+
+      while(iterator.hasNext()) {
+        Entry obstacleEntry = iterator.next();
+        Map obstacle = (Map) obstacleEntry.getValue();
+        String type = (String) obstacle.get("type");
+        if(type == null) type = "";
+        switch(type) {
+          case "kinematic":
+          case "static":
+          default:
+            this.obstacles.add(new Pair<>((String) obstacleEntry.getKey(),
+                Obstacle.fromString(this, getObstacleStringFromJSONMap(obstacle))));
+            break;
         }
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
       System.out.println("Obstacle file at " + filePath + " cannot be opened.");
       e.printStackTrace();
     }
@@ -158,6 +212,10 @@ public abstract class GameController {
     root.getChildren().addAll(objects.collect(Collectors.toCollection(LinkedList::new)));
   }
 
+  protected void removeFromScreen(Node node) {
+    root.getChildren().remove(node);
+  }
+
   /**
    * Sets the background fill.
    *
@@ -170,7 +228,7 @@ public abstract class GameController {
   /**
    * @return the {@code Obstacles} currently in the screen.
    */
-  public LinkedList<Obstacle> getObstacles() {
+  public LinkedList<Pair<String, Obstacle>> getObstacles() {
     return obstacles;
   }
 
@@ -184,10 +242,26 @@ public abstract class GameController {
   /**
    * Adds an {@code Obstacle} to the list of active {@code Obstacles}.
    *
+   * @param name the {@code Obstacle's} name.
    * @param obstacle the {@code Obstacle} to add.
    */
-  protected void addObstacle(Obstacle obstacle) {
-    obstacles.add(obstacle);
+  protected void addObstacle(String name, Obstacle obstacle) {
+    obstacles.add(new Pair<>(name, obstacle));
+    addToScreen(obstacle.getScreenMask());
+  }
+
+  /**
+   * Removes the first {@code Obstacle} with the given name.
+   * @param name the {@code Obstacle's} name.
+   */
+  protected void removeObstacle(String name) {
+    for(Pair<String, Obstacle> obstacle : obstacles) {
+      if(obstacle.getKey().equals(name)) {
+        obstacles.remove(obstacle);
+        removeFromScreen(obstacle.getValue().getScreenMask());
+        break;
+      }
+    }
   }
 
   /**

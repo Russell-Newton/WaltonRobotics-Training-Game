@@ -1,7 +1,4 @@
-import static javafx.scene.input.KeyCode.A;
-import static javafx.scene.input.KeyCode.D;
-import static javafx.scene.input.KeyCode.SHIFT;
-import static javafx.scene.input.KeyCode.SPACE;
+import static javafx.scene.input.KeyCode.*;
 
 import utilities.GameController;
 import utilities.Player;
@@ -13,12 +10,14 @@ public class TestGameController extends GameController {
 
   @Override
   protected void init() {
+    createObstacles("/assets/Obstacles.json");
+
     player = new Player(this,
         "https://www.seekpng.com/png/detail/223-2238252_image-result-for-mario-sprite-video-game-font.png");
-    player.setJumpKey(SPACE);
-    player.setWalkLeftKey(A);
-    player.setWalkRightKey(D);
-    player.setRunKey(SHIFT);
+//    player.setJumpKey();
+//    player.setWalkLeftKey();
+//    player.setWalkRightKey();
+//    player.setRunKey();   // What to hold down to run
   }
 
   @Override
