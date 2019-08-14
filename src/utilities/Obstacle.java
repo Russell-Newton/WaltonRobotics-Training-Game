@@ -44,6 +44,7 @@ public class Obstacle {
   protected Vec2 centerOfMass;
   Rectangle screenMask;
   private BodyType bodyType;
+  protected Paint fill;
 
   /**
    * Create a new {@code obstacle}.
@@ -72,13 +73,7 @@ public class Obstacle {
 
     this.centerOfMass = new Vec2(width / 2, height / 2);
 
-    initBody();
-    createWorldContactOperations();
-
-    screenMask = new Rectangle(toPixelWidth(width), toPixelHeight(height), fill);
-    screenMask.setUserData(body);
-    updateScreenMask();
-    controller.addToScreen(screenMask);
+    this.fill = fill;
   }
 
   /**
@@ -115,19 +110,32 @@ public class Obstacle {
         BodyType.KINEMATIC);
   }
 
+  public void initialize() {
+    initBody();
+    createWorldContactOperations();
+
+    screenMask = new Rectangle(toPixelWidth(width), toPixelHeight(height), fill);
+    screenMask.setUserData(body);
+    updateScreenMask();
+    controller.addToScreen(screenMask);
+  }
+
   /**
    * Create a new {@code Object} from a {@code String}. It should be formatted as follows:<br><br>
    * "X:nnn,Y:nnn,W:nnn,H:nnn,A:nnn,P:nnn", <br><br> where each capital letter denotes {@code
    * Obstacle} parameters:<br> X: = startX<br> Y: = startY<br> W: = width<br> H: = height<br> A: =
    * angle (degrees)  --  This is not working like it should right now and will be overridden to be
    * 0.<br> P: = file or web location of the sprite (If an error in this step occurs, the color will
-   * be the default Color)
+   * be the default Color).
    *
    * @param controller the controller this {@code Obstacle} belongs.
    * @param paramString a string containing the above format to create the {@code Obstacle} from.
+   * @param doPrint whether or not to print out the debug string.
    */
-  public static Obstacle fromString(GameController controller, String paramString) {
-    System.out.println("Creating obstacle from: " + paramString);
+  public static Obstacle fromString(GameController controller, String paramString, boolean doPrint) {
+    if(doPrint) {
+      System.out.println("Creating obstacle from: " + paramString);
+    }
     String[] parameters = paramString.split(",?[XYWHAP]:");
     try {
       float startX = Float.parseFloat(parameters[1]);
@@ -143,11 +151,14 @@ public class Obstacle {
       }
       return new Obstacle(controller, startX, startY, width, height, angle, paint);
     } catch (NumberFormatException | IndexOutOfBoundsException | NullPointerException e) {
-      System.out.println("The input string was not in the correct format. See the Stack Trace for"
-          + " more information.");
+      System.out.println("The input string was not in the correct format.");
       e.printStackTrace();
       return null;
     }
+  }
+
+  public static Obstacle fromString(GameController controller, String paramString) {
+    return fromString(controller, paramString, true);
   }
 
   /**
@@ -375,5 +386,12 @@ public class Obstacle {
       toString.append("    ]\n");
     }
     return toString.toString();
+  }
+
+  /**
+   * Updates the {@code Obstacle}. Call this in a {@code GameController's execute()} method.
+   */
+  public void update() {
+    updateScreenMask();
   }
 }

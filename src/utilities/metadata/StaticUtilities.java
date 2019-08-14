@@ -30,6 +30,7 @@ public class StaticUtilities {
   public static final float DEFAULT_OBSTACLE_FRICTION = 10;
   public static final float DEFAULT_OBSTACLE_RESTITUTION = 0;
   public static final float SIDE_SENSOR_OFFSET = 0.1f;
+  public static final float DEFAULT_KINEMATIC_OBSTACLE_SPEED = 1;
   //
   //Player constants
   //
@@ -45,7 +46,7 @@ public class StaticUtilities {
   public static final Vec2 JUMP_VECTOR = new Vec2(0, 25f);
   public static final Vec2 WALK_VECTOR = new Vec2(10f, 0);
   public static final Vec2 RUN_VECTOR = new Vec2(20f, 0);
-  public static final int JUMP_COUNT = 2;
+  public static final int JUMP_COUNT = 4;
   public static final boolean STOP_HORIZONTAL_MOTION_ON_KEY_RELEASE = true;
   //
   //Screen constants

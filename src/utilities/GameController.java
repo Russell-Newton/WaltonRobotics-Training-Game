@@ -5,10 +5,9 @@ import static utilities.metadata.StaticUtilities.GRAVITY_ACCELERATION;
 import static utilities.metadata.StaticUtilities.POSITION_ITERATIONS;
 import static utilities.metadata.StaticUtilities.VELOCITY_ITERATIONS;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -28,9 +27,17 @@ import javafx.scene.paint.Paint;
 import javafx.util.Duration;
 import javafx.util.Pair;
 import org.jbox2d.common.Vec2;
+import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.World;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.waltonrobotics.metadata.Pose;
+import org.waltonrobotics.motion.BezierCurve;
+import org.waltonrobotics.motion.LinearInterpolation;
+import org.waltonrobotics.motion.Path;
+import org.waltonrobotics.motion.Spline;
+import utilities.metadata.UserData;
 
 /**
  * @author Russell Newton
@@ -45,6 +52,7 @@ public abstract class GameController {
   private Timeline executionTimeline;
   private LinkedList<Pair<String, Obstacle>> obstacles = new LinkedList<>();
   private Paint backgroundPaint = Color.LIGHTBLUE;
+  private double executionTime = 0;
 
   /**
    * Creates a new {@code GameController}.
@@ -63,6 +71,7 @@ public abstract class GameController {
               //Update the engine and player
               stepWorld();
               player.update();
+              updateObstacles();
 
               //Run periodic controller methods
               execute();
@@ -80,7 +89,7 @@ public abstract class GameController {
   @FXML
   protected void initialize() {
     setBackground(backgroundPaint);
-    createObstacles("/assets/Boundaries.json");
+    createObstacles("/assets/obstacles/Boundaries.json");
 
     init();
     executionTimeline.play();
@@ -88,14 +97,16 @@ public abstract class GameController {
 
   /**
    * Adds obstacles to the controller.
+   *
    * @param obstacleJSONFiles an array of {@code Obstacle} JSON files' relative locations.
    */
   protected void createObstacles(String... obstacleJSONFiles) {
 //    createObstaclesFromJSON("/assets/Boundaries.json");
 //    createObstaclesFromJSON("/assets/Obstacles.json");
-    for(String location : obstacleJSONFiles) {
+    for (String location : obstacleJSONFiles) {
       createObstaclesFromJSON(location);
     }
+    initObstacles();
   }
 
 //  protected void createObstaclesFromFile(String filePath) {
@@ -135,18 +146,55 @@ public abstract class GameController {
       String absolutePath = new File("").getAbsolutePath();
       JSONObject json = (JSONObject) (new JSONParser().parse(
           new FileReader(absolutePath + "\\src" + filePath)));
-      
+
       Map staticObstacles = (Map) json.get("obstacles");
       Iterator<Entry> iterator = staticObstacles.entrySet().iterator();
 
-      while(iterator.hasNext()) {
+      while (iterator.hasNext()) {
         Entry obstacleEntry = iterator.next();
         Map obstacle = (Map) obstacleEntry.getValue();
         String type = (String) obstacle.get("type");
-        if(type == null) type = "";
-        switch(type) {
+        if (type == null) {
+          type = "";
+        }
+        switch (type) {
           case "kinematic":
-          case "static":
+            try {
+              String staticString = getObstacleStringFromJSONMap(obstacle);
+              float speed = Float.parseFloat("" + obstacle.get("speed"));
+              String interpolation = (String) obstacle.get("interpolation");
+              LinkedList<Pose> points = new LinkedList<>();
+              JSONArray path = (JSONArray) obstacle.get("path");
+              for (Object point : path) {
+                JSONArray pointArray = (JSONArray) point;
+                float x = Float.parseFloat(String.valueOf(pointArray.get(0)));
+                float y = Float.parseFloat(String.valueOf(pointArray.get(1)));
+                points.add(new Pose(x, y));
+              }
+              Path interp;
+              switch (interpolation) {
+                case "cubic":
+                  interp = new Spline(speed, 0.1, speed, speed, false, points);
+                  break;
+                case "bezier":
+                  interp = new BezierCurve(speed, 0.1, speed, speed, false, points);
+                  break;
+                case "linear":
+                default:
+                  interp = new LinearInterpolation(speed, 0.1, speed, speed, false,
+                      points);
+                  break;
+              }
+              this.obstacles
+                  .add(new Pair<>((String) obstacleEntry.getKey(), KinematicObstacle.fromString(
+                      this, staticString, speed, interp)));
+            } catch (NullPointerException | IndexOutOfBoundsException | IllegalArgumentException e) {
+              e.printStackTrace();
+              System.out.println("Kinematic obstacle defined wrong. Changing to static");
+              this.obstacles.add(new Pair<>((String) obstacleEntry.getKey(),
+                  Obstacle.fromString(this, getObstacleStringFromJSONMap(obstacle))));
+            }
+            break;
           default:
             this.obstacles.add(new Pair<>((String) obstacleEntry.getKey(),
                 Obstacle.fromString(this, getObstacleStringFromJSONMap(obstacle))));
@@ -156,6 +204,17 @@ public abstract class GameController {
     } catch (Exception e) {
       System.out.println("Obstacle file at " + filePath + " cannot be opened.");
       e.printStackTrace();
+    }
+//    printWorldBodyUserData();
+  }
+
+  private void printWorldBodyUserData() {
+    Body body = world.getBodyList();
+    System.out.println(Arrays.toString(
+        ((UserData) body.getUserData()).getUserData().values().toArray()));
+    while((body = body.getNext()) != null) {
+      System.out.println(Arrays.toString(
+          ((UserData) body.getUserData()).getUserData().values().toArray()));
     }
   }
 
@@ -237,6 +296,19 @@ public abstract class GameController {
    */
   void stepWorld() {
     world.step((float) FRAME_INTERVAL / 1000.0f, VELOCITY_ITERATIONS, POSITION_ITERATIONS);
+    executionTime += FRAME_INTERVAL / 1000;
+  }
+
+  protected void initObstacles() {
+    for(Pair<String, Obstacle> obstacle: obstacles) {
+      obstacle.getValue().initialize();
+    }
+  }
+
+  protected void updateObstacles() {
+    for(Pair<String, Obstacle> obstacle: obstacles) {
+      obstacle.getValue().update();
+    }
   }
 
   /**
@@ -252,11 +324,12 @@ public abstract class GameController {
 
   /**
    * Removes the first {@code Obstacle} with the given name.
+   *
    * @param name the {@code Obstacle's} name.
    */
   protected void removeObstacle(String name) {
-    for(Pair<String, Obstacle> obstacle : obstacles) {
-      if(obstacle.getKey().equals(name)) {
+    for (Pair<String, Obstacle> obstacle : obstacles) {
+      if (obstacle.getKey().equals(name)) {
         obstacles.remove(obstacle);
         removeFromScreen(obstacle.getValue().getScreenMask());
         break;
@@ -276,6 +349,13 @@ public abstract class GameController {
    */
   public void pauseExecutionTimeline() {
     executionTimeline.pause();
+  }
+
+  /**
+   * @return the time since the execution start.
+   */
+  public double getExecutionTime() {
+    return executionTime;
   }
 
 }

@@ -19,9 +19,14 @@ Your standard obstacle JSON file will look like this:
 You need to have all your obstacles enclosed in the "obstacles" array.
 
 If "type" is set to kinematic, the following information is required:
-  "speed": <speed>,                                     <-- If unspecified, defaults to 1
-  "trajectory": [                                       <-- If unspecified, will not move
+  "speed": <speed>,                                     <-- If unspecified, defaulted from StaticUtilities
+  "path": [                                             <-- If unspecified, will not move
     [x1, y1],                                           <-- At least two points required
     [x2, y2],
     ...
-  ]                                                     <-- Uses brackets instead of braces
+  ],                                                    <-- Uses brackets instead of braces
+  "interpolation": <"linear", "cubic", "bezier">        <-- If unspecified, defaults to linear
+
+Kinematic object will repeatedly move down the line of points and then back up.
+If "interpolation" is set to "cubic", the path will be a cubic bezier spline.
+If "interpolation" is set to "bezier", the path will be a bezier curve.

@@ -51,6 +51,7 @@ public class Player extends Obstacle {
   public Player(GameController controller, Image sprite, float startX, float startY) {
     super(controller, startX, startY, DEFAULT_PLAYER_WIDTH, DEFAULT_PLAYER_HEIGHT,
         DEFAULT_PLAYER_ANGLE, new ImagePattern(sprite), BodyType.DYNAMIC);
+    initialize();
   }
 
   /**
@@ -96,6 +97,7 @@ public class Player extends Obstacle {
     super(controller, startX, startY, DEFAULT_PLAYER_WIDTH, DEFAULT_PLAYER_HEIGHT,
         DEFAULT_PLAYER_ANGLE,
         DEFAULT_PLAYER_FILL, BodyType.DYNAMIC);
+    initialize();
   }
 
   /**
@@ -107,11 +109,9 @@ public class Player extends Obstacle {
     this(controller, DEFAULT_PLAYER_START_X, DEFAULT_PLAYER_START_Y);
   }
 
-  /**
-   * Updates the {@code Player} every execution cycle.
-   */
-  void update() {
-    updateScreenMask();
+  @Override
+  public void update() {
+    super.update();
     for (KeyBind keyBind : keyBinds.values()) {
       keyBind.handle();
     }
