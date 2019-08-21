@@ -3,7 +3,6 @@ import static javafx.scene.input.KeyCode.D;
 import static javafx.scene.input.KeyCode.SHIFT;
 import static javafx.scene.input.KeyCode.W;
 
-import org.jbox2d.dynamics.Body;
 import utilities.GameController;
 import utilities.Player;
 
