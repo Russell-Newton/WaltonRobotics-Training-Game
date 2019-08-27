@@ -1,6 +1,5 @@
 import utilities.GameController;
 import utilities.Player;
-import static javafx.scene.input.KeyCode.*;
 
 /**
  * This is a simple GameController to get you started.

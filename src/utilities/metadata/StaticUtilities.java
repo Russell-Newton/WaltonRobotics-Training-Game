@@ -2,9 +2,13 @@ package utilities.metadata;
 
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.paint.Paint;
+import javafx.scene.transform.Scale;
+import javafx.scene.transform.Transform;
 import javafx.stage.Screen;
 import org.jbox2d.common.Vec2;
 import utilities.SceneController;
@@ -17,7 +21,7 @@ import utilities.SceneController;
 public class StaticUtilities {
 
   //Physics engine constants
-  public static final float GRAVITY_ACCELERATION = -30.0f;  //-9.8 is crazy slow what heck
+  public static final float GRAVITY_ACCELERATION = -50.0f;  //-9.8 is crazy slow what heck
   public static final double FRAME_INTERVAL = 5.0;
   public static final int VELOCITY_ITERATIONS = 5;
   public static final int POSITION_ITERATIONS = 3;
@@ -31,6 +35,7 @@ public class StaticUtilities {
   public static final float DEFAULT_OBSTACLE_RESTITUTION = 0;
   public static final float SIDE_SENSOR_OFFSET = 0.1f;
   public static final float DEFAULT_KINEMATIC_OBSTACLE_SPEED = 1;
+  public static final Scale FLIP_HORIZONTAL = Transform.scale(-1, 1);
   //
   //Player constants
   //
@@ -43,15 +48,17 @@ public class StaticUtilities {
   public static final float DEFAULT_PLAYER_MASS = 1;
   public static final float DEFAULT_PLAYER_FRICTION = 10;
   public static final float DEFAULT_PLAYER_RESTITUTION = 0;
-  public static final Vec2 JUMP_VECTOR = new Vec2(0, 25f);
-  public static final Vec2 WALK_VECTOR = new Vec2(10f, 0);
-  public static final Vec2 RUN_VECTOR = new Vec2(20f, 0);
+  public static final Vec2 JUMP_VECTOR = new Vec2(0, 30f);
+  public static final Vec2 WALK_VECTOR = new Vec2(15f, 0);
+  public static final Vec2 RUN_VECTOR = new Vec2(30f, 0);
   public static final int JUMP_COUNT = 4;
   public static final boolean STOP_HORIZONTAL_MOTION_ON_KEY_RELEASE = true;
+  public static final float DEFAULT_PLAYER_SPRITE_SCALE = 8f;
   //
   //Screen constants
   //
   public static final Rectangle2D PRIMARY_SCREEN_BOUNDS = Screen.getPrimary().getVisualBounds();
+  public static final Paint DEFAULT_BACKGROUND = Color.LIGHTBLUE;
   private static final float PRIMARY_SCREEN_BOUNDS_WIDTH = (float) PRIMARY_SCREEN_BOUNDS.getWidth();
   private static final float PRIMARY_SCREEN_BOUNDS_HEIGHT =
       (float) PRIMARY_SCREEN_BOUNDS.getHeight();
@@ -141,6 +148,77 @@ public class StaticUtilities {
    */
   public static float toJB2DAngle(float angle) {
     return (float) -Math.toRadians(angle);
+  }
+
+  public static float getWidthFromSprite(Paint sprite) {
+    ImagePattern spriteImagePattern = (ImagePattern) sprite;
+    return (float) (spriteImagePattern.getWidth() * DEFAULT_PLAYER_SPRITE_SCALE);
+  }
+
+  public static float getHeightFromSprite(Paint sprite) {
+    ImagePattern spriteImagePattern = (ImagePattern) sprite;
+    return (float) (spriteImagePattern.getHeight() * DEFAULT_PLAYER_SPRITE_SCALE);
+  }
+
+  /**
+   * Load an {@code ImagePattern} from a {@code String}.<br>It will first try to load the image
+   * directly from the passed path. Upon failure, it will look for the image in /assets/sprites.
+   * Upon failure, it will look for the image with a ".png" ending in /assets/sprites. Upon failure,
+   * it will return the default obstacle fill.
+   *
+   * @param stretch whether or not to stretch the image to fit the JavaFX {@code Node}. If this is
+   * false, the image will tile. Defaults to false.
+   */
+  public static Paint getFillFromString(String string, boolean stretch) {
+    Image image = null;
+    Paint sprite;
+
+    // Try from URL or Path
+    try {
+      System.out.print("Attempting to load sprite from URL or path... ");
+      image = new Image(string);
+      System.out.println("Success!");
+    } catch (Exception e) {
+      System.out.println("Failed.");
+    }
+
+    if (image == null) {
+      // Try from name within sprites assets folder
+      try {
+        System.out.print("Attempting to load sprite from sprites assets folder... ");
+        image = new Image("/assets/sprites/" + string);
+        System.out.println("Success!");
+      } catch (Exception e) {
+        System.out.println("Failed.");
+      }
+    }
+
+    if (image == null) {
+      // Try from name within sprites assets folder
+      try {
+        System.out.print("Attempting to load sprite from sprites assets folder with \".png\"... ");
+        image = new Image("/assets/sprites/" + string + ".png");
+        System.out.println("Success!");
+      } catch (Exception e) {
+        System.out.println("Failed.");
+      }
+    }
+
+    if (image == null) {
+      System.out.println("Setting to default fill.");
+      sprite = DEFAULT_OBSTACLE_FILL;
+      return sprite;
+    } else if (stretch) {
+      sprite = new ImagePattern(image);
+      return sprite;
+    } else {
+      sprite = new ImagePattern(image, 0, 0, image.getWidth(), image.getHeight(), false);
+      return sprite;
+    }
+  }
+
+  public static Paint getFillFromString(String string) {
+    return getFillFromString(string, false);
   }
 
 }

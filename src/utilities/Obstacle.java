@@ -4,7 +4,9 @@ import static utilities.metadata.StaticUtilities.DEFAULT_OBSTACLE_FILL;
 import static utilities.metadata.StaticUtilities.DEFAULT_OBSTACLE_FRICTION;
 import static utilities.metadata.StaticUtilities.DEFAULT_OBSTACLE_MASS;
 import static utilities.metadata.StaticUtilities.DEFAULT_OBSTACLE_RESTITUTION;
+import static utilities.metadata.StaticUtilities.FLIP_HORIZONTAL;
 import static utilities.metadata.StaticUtilities.SIDE_SENSOR_OFFSET;
+import static utilities.metadata.StaticUtilities.getFillFromString;
 import static utilities.metadata.StaticUtilities.toJB2DAngle;
 import static utilities.metadata.StaticUtilities.toJFXAngle;
 import static utilities.metadata.StaticUtilities.toPixelHeight;
@@ -12,11 +14,10 @@ import static utilities.metadata.StaticUtilities.toPixelPosX;
 import static utilities.metadata.StaticUtilities.toPixelPosY;
 import static utilities.metadata.StaticUtilities.toPixelWidth;
 
-import javafx.scene.image.Image;
-import javafx.scene.paint.ImagePattern;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Transform;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
@@ -42,9 +43,9 @@ public class Obstacle {
   public float angle;
   protected Body body;
   protected Vec2 centerOfMass;
+  protected Paint fill;
   Rectangle screenMask;
   private BodyType bodyType;
-  protected Paint fill;
 
   /**
    * Create a new {@code obstacle}.
@@ -77,16 +78,7 @@ public class Obstacle {
   }
 
   /**
-   * Create a new {@code Obstacle} with the a {@code KINEMATIC BodyType}.
-   *
-   * @param controller the controller this {@code Obstacle} belongs to.
-   * @param startX the starting x coordinate of the corresponding physics body.
-   * @param startY the starting y coordinate of the corresponding physics body.
-   * @param width the width of the corresponding physics body.
-   * @param height the height of the corresponding physics body.
-   * @param angle the starting angle of the corresponding physics body. Because it's not working
-   * right, this is overridden to 0.
-   * @param fill the fill of the corresponding screenMask.
+   * Create a new {@code Obstacle} with the recommended {@code KINEMATIC BodyType}.
    */
   public Obstacle(GameController controller, float startX, float startY, float width,
       float height, float angle, Paint fill) {
@@ -94,30 +86,13 @@ public class Obstacle {
   }
 
   /**
-   * Create a new {@code Obstacle} with the a {@code KINEMATIC BodyType} and default fill.
-   *
-   * @param controller the controller this {@code Obstacle} belongs to.
-   * @param startX the starting x coordinate of the corresponding physics body.
-   * @param startY the starting y coordinate of the corresponding physics body.
-   * @param width the width of the corresponding physics body.
-   * @param height the height of the corresponding physics body.
-   * @param angle the starting angle of the corresponding physics body. Because it's not working
-   * right, this is overridden to 0.
+   * Create a new {@code Obstacle} with the recommended {@code KINEMATIC BodyType} and default
+   * fill.
    */
   public Obstacle(GameController controller, float startX, float startY, float width,
       float height, float angle) {
     this(controller, startX, startY, width, height, angle, DEFAULT_OBSTACLE_FILL,
         BodyType.KINEMATIC);
-  }
-
-  public void initialize() {
-    initBody();
-    createWorldContactOperations();
-
-    screenMask = new Rectangle(toPixelWidth(width), toPixelHeight(height), fill);
-    screenMask.setUserData(body);
-    updateScreenMask();
-    controller.addToScreen(screenMask);
   }
 
   /**
@@ -132,8 +107,9 @@ public class Obstacle {
    * @param paramString a string containing the above format to create the {@code Obstacle} from.
    * @param doPrint whether or not to print out the debug string.
    */
-  public static Obstacle fromString(GameController controller, String paramString, boolean doPrint) {
-    if(doPrint) {
+  public static Obstacle fromString(GameController controller, String paramString,
+      boolean doPrint) {
+    if (doPrint) {
       System.out.println("Creating obstacle from: " + paramString);
     }
     String[] parameters = paramString.split(",?[XYWHAP]:");
@@ -143,11 +119,9 @@ public class Obstacle {
       float width = Float.parseFloat(parameters[3]);
       float height = Float.parseFloat(parameters[4]);
       float angle = /*Float.parseFloat(parameters[5])*/ 0;
-      Paint paint;
-      try {
-        paint = new ImagePattern(new Image(parameters[6]));
-      } catch (NullPointerException | IndexOutOfBoundsException | IllegalArgumentException e) {
-        paint = DEFAULT_OBSTACLE_FILL;
+      Paint paint = DEFAULT_OBSTACLE_FILL;
+      if (parameters.length > 6) {
+        paint = getFillFromString(parameters[6]);
       }
       return new Obstacle(controller, startX, startY, width, height, angle, paint);
     } catch (NumberFormatException | IndexOutOfBoundsException | NullPointerException e) {
@@ -159,6 +133,16 @@ public class Obstacle {
 
   public static Obstacle fromString(GameController controller, String paramString) {
     return fromString(controller, paramString, true);
+  }
+
+  public void initialize() {
+    initBody();
+    createWorldContactOperations();
+
+    screenMask = new Rectangle(toPixelWidth(width), toPixelHeight(height), fill);
+    screenMask.setUserData(body);
+    updateScreenMask();
+    controller.addToScreen(screenMask);
   }
 
   /**
@@ -208,6 +192,11 @@ public class Obstacle {
    */
   protected void updateScreenMask() {
 
+    boolean replaceFlipHorizontal = false;
+    if (screenMask.getTransforms().contains(FLIP_HORIZONTAL)) {
+      replaceFlipHorizontal = true;
+    }
+
     //Remove previous rotation
     screenMask.getTransforms().clear();
 
@@ -221,6 +210,11 @@ public class Obstacle {
     Vec2 dCorner = originPointShift(body.getAngle());
     screenMask.setTranslateX(-dCorner.x);
     screenMask.setTranslateY(-dCorner.y);
+
+    if (replaceFlipHorizontal) {
+      screenMask.getTransforms().add(FLIP_HORIZONTAL);
+      screenMask.getTransforms().add(Transform.translate(-screenMask.getWidth(), 0));
+    }
 
 //    System.out.println(toString());
   }
@@ -359,6 +353,23 @@ public class Obstacle {
     controller.world.destroyBody(body);
   }
 
+  /**
+   * Updates the {@code Obstacle}. Call this in a {@code GameController's execute()} method.
+   */
+  public void update() {
+    updateScreenMask();
+  }
+
+
+  public void flipScreenMask() {
+    if (screenMask.getTransforms().contains(FLIP_HORIZONTAL)) {
+      screenMask.getTransforms().remove(FLIP_HORIZONTAL);
+    } else {
+      screenMask.getTransforms().add(FLIP_HORIZONTAL);
+    }
+    updateScreenMask();
+  }
+
   @Override
   public String toString() {
     StringBuilder toString = new StringBuilder(String.format("Obstacle:[%n  ScreenMask:[x:%f, "
@@ -386,12 +397,5 @@ public class Obstacle {
       toString.append("    ]\n");
     }
     return toString.toString();
-  }
-
-  /**
-   * Updates the {@code Obstacle}. Call this in a {@code GameController's execute()} method.
-   */
-  public void update() {
-    updateScreenMask();
   }
 }

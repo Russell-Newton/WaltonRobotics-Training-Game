@@ -1,9 +1,11 @@
 package utilities;
 
+import static utilities.metadata.StaticUtilities.DEFAULT_BACKGROUND;
 import static utilities.metadata.StaticUtilities.FRAME_INTERVAL;
 import static utilities.metadata.StaticUtilities.GRAVITY_ACCELERATION;
 import static utilities.metadata.StaticUtilities.POSITION_ITERATIONS;
 import static utilities.metadata.StaticUtilities.VELOCITY_ITERATIONS;
+import static utilities.metadata.StaticUtilities.getFillFromString;
 
 import java.io.File;
 import java.io.FileReader;
@@ -22,7 +24,6 @@ import javafx.scene.Node;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.util.Duration;
 import javafx.util.Pair;
@@ -45,13 +46,13 @@ import utilities.metadata.UserData;
 public abstract class GameController {
 
   protected Player player;
+  protected Paint backgroundPaint = DEFAULT_BACKGROUND;
   @FXML
   AnchorPane root;
   World world;
   WorldContactListener contactListener;
   private Timeline executionTimeline;
   private LinkedList<Pair<String, Obstacle>> obstacles = new LinkedList<>();
-  private Paint backgroundPaint = Color.LIGHTBLUE;
   private double executionTime = 0;
 
   /**
@@ -126,6 +127,10 @@ public abstract class GameController {
 //    }
 //  }
 
+  /**
+   * Takes a JSON formatted {@code Obstacle} and returns a parameter {@code String} that can be
+   * passed into {@code Obstacle.fromString()}.
+   */
   private String getObstacleStringFromJSONMap(Map obstacle) {
     float x = Float.parseFloat("" + obstacle.get("x"));
     float y = Float.parseFloat("" + obstacle.get("y"));
@@ -141,6 +146,10 @@ public abstract class GameController {
         x, y, width, height, angle, sprite);
   }
 
+  /**
+   * Creates {@code Obstacles} declared within a JSON file. Refer to "HowToCreateAnObstacleJSON.txt"
+   * for formatting help.
+   */
   protected void createObstaclesFromJSON(String filePath) {
     try {
       String absolutePath = new File("").getAbsolutePath();
@@ -212,7 +221,7 @@ public abstract class GameController {
     Body body = world.getBodyList();
     System.out.println(Arrays.toString(
         ((UserData) body.getUserData()).getUserData().values().toArray()));
-    while((body = body.getNext()) != null) {
+    while ((body = body.getNext()) != null) {
       System.out.println(Arrays.toString(
           ((UserData) body.getUserData()).getUserData().values().toArray()));
     }
@@ -285,6 +294,21 @@ public abstract class GameController {
   }
 
   /**
+   * Sets the background using the {@code getFillFromString()} method in {@code StaticUtilities}.
+   */
+  protected void setBackground(String string) {
+    root.setBackground(
+        new Background(new BackgroundFill(getFillFromString(string, true), null, null)));
+  }
+
+  /**
+   * Refreshes the background fill to {@code backgroundPaint}.
+   */
+  protected void refreshBackground() {
+    setBackground(backgroundPaint);
+  }
+
+  /**
    * @return the {@code Obstacles} currently in the screen.
    */
   public LinkedList<Pair<String, Obstacle>> getObstacles() {
@@ -299,14 +323,20 @@ public abstract class GameController {
     executionTime += FRAME_INTERVAL / 1000;
   }
 
+  /**
+   * Initializes every {@code Obstacle}.
+   */
   protected void initObstacles() {
-    for(Pair<String, Obstacle> obstacle: obstacles) {
+    for (Pair<String, Obstacle> obstacle : obstacles) {
       obstacle.getValue().initialize();
     }
   }
 
+  /**
+   * Runs the {@code update()} method in every {@code Obstacle}.
+   */
   protected void updateObstacles() {
-    for(Pair<String, Obstacle> obstacle: obstacles) {
+    for (Pair<String, Obstacle> obstacle : obstacles) {
       obstacle.getValue().update();
     }
   }

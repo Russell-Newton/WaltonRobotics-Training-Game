@@ -9,24 +9,29 @@ import static utilities.metadata.StaticUtilities.DEFAULT_PLAYER_RESTITUTION;
 import static utilities.metadata.StaticUtilities.DEFAULT_PLAYER_START_X;
 import static utilities.metadata.StaticUtilities.DEFAULT_PLAYER_START_Y;
 import static utilities.metadata.StaticUtilities.DEFAULT_PLAYER_WIDTH;
+import static utilities.metadata.StaticUtilities.FLIP_HORIZONTAL;
 import static utilities.metadata.StaticUtilities.JUMP_COUNT;
 import static utilities.metadata.StaticUtilities.JUMP_VECTOR;
 import static utilities.metadata.StaticUtilities.RUN_VECTOR;
 import static utilities.metadata.StaticUtilities.STOP_HORIZONTAL_MOTION_ON_KEY_RELEASE;
 import static utilities.metadata.StaticUtilities.WALK_VECTOR;
+import static utilities.metadata.StaticUtilities.getFillFromString;
+import static utilities.metadata.StaticUtilities.getHeightFromSprite;
+import static utilities.metadata.StaticUtilities.getWidthFromSprite;
 import static utilities.metadata.StaticUtilities.scene;
 
 import java.util.HashMap;
-import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.paint.ImagePattern;
+import javafx.scene.paint.Paint;
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.collision.Manifold;
+import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.Fixture;
 import org.jbox2d.dynamics.contacts.Contact;
 import utilities.metadata.ContactOperation;
+import utilities.metadata.EnhancedBoolean;
 import utilities.metadata.KeyBind;
 import utilities.metadata.KeyBind.KeyBindHandler;
 import utilities.metadata.UserData;
@@ -38,60 +43,45 @@ public class Player extends Obstacle {
 
   private int jumpCount = 0;
   private boolean isRunning = false;
+  private boolean isJumping = false;
   private HashMap<String, KeyBind> keyBinds = new HashMap<>();
 
   /**
-   * Creates a player with an {@code Image} as a sprite.
-   *
-   * @param controller the controller this {@code Player} belongs to.
-   * @param sprite the {@code Image} to be used as a sprite.
-   * @param startX the starting x coordinate of the corresponding physics body.
-   * @param startY the starting y coordinate of the corresponding physics body.
+   * Creates a {@code Player}.
    */
-  public Player(GameController controller, Image sprite, float startX, float startY) {
-    super(controller, startX, startY, DEFAULT_PLAYER_WIDTH, DEFAULT_PLAYER_HEIGHT,
-        DEFAULT_PLAYER_ANGLE, new ImagePattern(sprite), BodyType.DYNAMIC);
+  public Player(GameController controller, Paint sprite, float startX, float startY,
+      float rescale) {
+    super(controller, startX, startY, getWidthFromSprite(sprite) * rescale,
+        getHeightFromSprite(sprite) * rescale,
+        DEFAULT_PLAYER_ANGLE, sprite, BodyType.DYNAMIC);
     initialize();
   }
 
   /**
-   * Creates a player with an {@code Image} as a sprite at the default starting location.
-   *
-   * @param controller the controller this {@code Player} belongs to.
-   * @param sprite the {@code Image} to be used as a sprite.
+   * Creates a {@code Player} at the default starting location.
    */
-  public Player(GameController controller, Image sprite) {
-    this(controller, sprite, DEFAULT_PLAYER_START_X, DEFAULT_PLAYER_START_Y);
+  public Player(GameController controller, Paint sprite) {
+    this(controller, sprite, DEFAULT_PLAYER_START_X, DEFAULT_PLAYER_START_Y, 1);
   }
 
   /**
-   * Creates a player with a sprite from a file path.
+   * Creates a {@code Player} with a sprite from a file path.
    *
-   * @param controller the controller this {@code Player} belongs to.
    * @param spritePath the path to the desired sprite image.
-   * @param startX the starting x coordinate of the corresponding physics body.
-   * @param startY the starting y coordinate of the corresponding physics body.
    */
   public Player(GameController controller, String spritePath, float startX, float startY) {
-    this(controller, new Image(spritePath), startX, startY);
+    this(controller, getFillFromString(spritePath, true), startX, startY, 1);
   }
 
   /**
-   * Creates a player with a sprite from a file path at the default starting location.
-   *
-   * @param controller the controller this {@code Player} belongs to.
-   * @param spritePath the path to the desired sprite image.
+   * Creates a {@code Player} with a sprite from a file path at the default starting location.
    */
   public Player(GameController controller, String spritePath) {
-    this(controller, new Image(spritePath));
+    this(controller, getFillFromString(spritePath, true));
   }
 
   /**
-   * Creates a player with the default fill.
-   *
-   * @param controller the controller this {@code Player} belongs to.
-   * @param startX the starting x coordinate of the corresponding physics body.
-   * @param startY the starting y coordinate of the corresponding physics body.
+   * Creates a {@code Player} with the default fill.
    */
   public Player(GameController controller, float startX, float startY) {
     super(controller, startX, startY, DEFAULT_PLAYER_WIDTH, DEFAULT_PLAYER_HEIGHT,
@@ -101,9 +91,7 @@ public class Player extends Obstacle {
   }
 
   /**
-   * Creates a player with the default fill at the default location.
-   *
-   * @param controller the controller this {@code Player} belongs to.
+   * Creates a {@code Player} with the default fill at the default location.
    */
   public Player(GameController controller) {
     this(controller, DEFAULT_PLAYER_START_X, DEFAULT_PLAYER_START_Y);
@@ -122,7 +110,7 @@ public class Player extends Obstacle {
     if (body.getLinearVelocity().x < 0) {
       MotionState.MOVING_LEFT.set(true);
     }
-    if (body.getLinearVelocity().y > 0) {
+    if (isJumping && body.getLinearVelocity().y > 0) {
       MotionState.JUMPING.set(true);
     }
     if (body.getLinearVelocity().y < 0) {
@@ -130,6 +118,12 @@ public class Player extends Obstacle {
     }
     if (body.getLinearVelocity().x == 0 && body.getLinearVelocity().y == 0) {
       MotionState.STANDING.set(true);
+    }
+
+    if (MotionState.MOVING_RIGHT.getValue()) {
+      faceRight();
+    } else if (MotionState.MOVING_LEFT.getValue()) {
+      faceLeft();
     }
   }
 
@@ -147,17 +141,18 @@ public class Player extends Obstacle {
 
       @Override
       public void handlePeriodic() {
-
+        isJumping = true;
       }
 
       @Override
       public void handleFallingEdge() {
-
+        body.setLinearVelocity(
+            new Vec2(body.getLinearVelocity().x, Math.min(10, body.getLinearVelocity().y)));
       }
 
       @Override
       public void handleDisable() {
-
+        isJumping = false;
       }
     }));
   }
@@ -181,8 +176,9 @@ public class Player extends Obstacle {
 
       @Override
       public void handleFallingEdge() {
-        if(STOP_HORIZONTAL_MOTION_ON_KEY_RELEASE)
-        body.getLinearVelocity().x = 0;
+        if (STOP_HORIZONTAL_MOTION_ON_KEY_RELEASE) {
+          body.getLinearVelocity().x = 0;
+        }
       }
 
       @Override
@@ -211,8 +207,9 @@ public class Player extends Obstacle {
 
       @Override
       public void handleFallingEdge() {
-        if(STOP_HORIZONTAL_MOTION_ON_KEY_RELEASE)
+        if (STOP_HORIZONTAL_MOTION_ON_KEY_RELEASE) {
           body.getLinearVelocity().x = 0;
+        }
       }
 
       @Override
@@ -294,15 +291,15 @@ public class Player extends Obstacle {
    */
   private void walk(boolean isRight) {
     if (isRunning) {
-      if (isRight && !MotionState.ON_WALL_RIGHT.get()) {
+      if (isRight && !MotionState.ON_WALL_RIGHT.getValue()) {
         body.getLinearVelocity().x = RUN_VECTOR.x;
-      } else if (!MotionState.ON_WALL_LEFT.get()) {
+      } else if (!isRight && !MotionState.ON_WALL_LEFT.getValue()) {
         body.getLinearVelocity().x = -RUN_VECTOR.x;
       }
     } else {
-      if (isRight && !MotionState.ON_WALL_RIGHT.get()) {
+      if (isRight && !MotionState.ON_WALL_RIGHT.getValue()) {
         body.getLinearVelocity().x = WALK_VECTOR.x;
-      } else if (!MotionState.ON_WALL_LEFT.get()) {
+      } else if (!isRight && !MotionState.ON_WALL_LEFT.getValue()) {
         body.getLinearVelocity().x = -WALK_VECTOR.x;
       }
     }
@@ -314,6 +311,27 @@ public class Player extends Obstacle {
    */
   private void resetJumpCount() {
     jumpCount = JUMP_COUNT;
+  }
+
+  /**
+   * Assumes the initial {@code screenMask} orientation is right.
+   */
+  public void faceRight() {
+    screenMask.getTransforms().remove(FLIP_HORIZONTAL);
+  }
+
+  public void faceLeft() {
+    if (!screenMask.getTransforms().contains(FLIP_HORIZONTAL)) {
+      screenMask.getTransforms().add(FLIP_HORIZONTAL);
+    }
+  }
+
+  public boolean isRunning() {
+    return isRunning;
+  }
+
+  public boolean isJumping() {
+    return isJumping;
   }
 
   @Override
@@ -465,7 +483,7 @@ public class Player extends Obstacle {
     STANDING {
       @Override
       public void set(boolean value) {
-        active = value;
+        active.set(value);
         if (value) {
           MOVING_RIGHT.set(false);
           MOVING_LEFT.set(false);
@@ -475,14 +493,14 @@ public class Player extends Obstacle {
       }
 
       @Override
-      public boolean get() {
+      public EnhancedBoolean getActive() {
         return active;
       }
     },
     MOVING_RIGHT {
       @Override
       public void set(boolean value) {
-        active = value;
+        active.set(value);
         if (value) {
           MOVING_LEFT.set(false);
           STANDING.set(false);
@@ -490,14 +508,14 @@ public class Player extends Obstacle {
       }
 
       @Override
-      public boolean get() {
+      public EnhancedBoolean getActive() {
         return active;
       }
     },
     MOVING_LEFT {
       @Override
       public void set(boolean value) {
-        active = value;
+        active.set(value);
         if (value) {
           MOVING_RIGHT.set(false);
           STANDING.set(false);
@@ -505,14 +523,14 @@ public class Player extends Obstacle {
       }
 
       @Override
-      public boolean get() {
+      public EnhancedBoolean getActive() {
         return active;
       }
     },
     JUMPING {
       @Override
       public void set(boolean value) {
-        active = value;
+        active.set(value);
         if (value) {
           FALLING.set(false);
           STANDING.set(false);
@@ -520,14 +538,14 @@ public class Player extends Obstacle {
       }
 
       @Override
-      public boolean get() {
+      public EnhancedBoolean getActive() {
         return active;
       }
     },
     FALLING {
       @Override
       public void set(boolean value) {
-        active = value;
+        active.set(value);
         if (value) {
           JUMPING.set(false);
           STANDING.set(false);
@@ -535,43 +553,47 @@ public class Player extends Obstacle {
       }
 
       @Override
-      public boolean get() {
+      public EnhancedBoolean getActive() {
         return active;
       }
     },
     ON_WALL_RIGHT {
       @Override
       public void set(boolean value) {
-        active = value;
+        active.set(value);
         if (value) {
           MOVING_RIGHT.set(false);
         }
       }
 
       @Override
-      public boolean get() {
+      public EnhancedBoolean getActive() {
         return active;
       }
     },
     ON_WALL_LEFT {
       @Override
       public void set(boolean value) {
-        active = value;
+        active.set(value);
         if (value) {
           MOVING_LEFT.set(false);
         }
       }
 
       @Override
-      public boolean get() {
+      public EnhancedBoolean getActive() {
         return active;
       }
     };
 
-    protected boolean active = false;
+    protected EnhancedBoolean active = new EnhancedBoolean(false);
 
     public abstract void set(boolean value);
 
-    public abstract boolean get();
+    public abstract EnhancedBoolean getActive();
+
+    public boolean getValue() {
+      return active.get();
+    }
   }
 }

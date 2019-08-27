@@ -2,21 +2,28 @@ import static javafx.scene.input.KeyCode.A;
 import static javafx.scene.input.KeyCode.D;
 import static javafx.scene.input.KeyCode.SHIFT;
 import static javafx.scene.input.KeyCode.W;
+import static utilities.metadata.StaticUtilities.getFillFromString;
 
+import javafx.scene.paint.Paint;
 import utilities.GameController;
 import utilities.Player;
+import utilities.Player.MotionState;
 
 /**
  * @author Russell Newton
  **/
 public class TestGameController extends GameController {
 
+  private Paint runSprite = getFillFromString("mario3.png", true);
+  private Paint walkSprite = getFillFromString("luigi3.png", true);
+  private Paint jumpSprite = getFillFromString("toadette3.png", true);
+
   @Override
   protected void init() {
     createObstacles("/assets/obstacles/Obstacles.json");
+    setBackground("background8");
 
-    player = new Player(this/*,
-        "https://www.seekpng.com/png/detail/223-2238252_image-result-for-mario-sprite-video-game-font.png"*/);
+    player = new Player(this, walkSprite);
     player.setJumpKey(W);
     player.setWalkLeftKey(A);
     player.setWalkRightKey(D);
@@ -25,7 +32,13 @@ public class TestGameController extends GameController {
 
   @Override
   protected void execute() {
-
+    if (player.isRunning()) {
+      player.setSprite(runSprite);
+    } else if (MotionState.JUMPING.getValue()) {
+      player.setSprite(jumpSprite);
+    } else {
+      player.setSprite(walkSprite);
+    }
   }
 
   @Override

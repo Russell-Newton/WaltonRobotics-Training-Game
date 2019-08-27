@@ -11,6 +11,8 @@ import org.waltonrobotics.motion.Path;
 
 /**
  * @author Russell Newton
+ * @see utilities.Obstacle
+ * @see org.waltonrobotics.motion.Path
  **/
 public class KinematicObstacle extends Obstacle {
 
@@ -23,6 +25,12 @@ public class KinematicObstacle extends Obstacle {
   private PathData pdPrevious;
   private PathData pdNext;
 
+  /**
+   * Create a {@code KinematicObstacle}. Like an {@code Obstacle}, with some new parameters.
+   *
+   * @param speed the speed at which to move the {@code KinematicObstacle} along {@code path}.
+   * @param path the {@code Path} the {@code KinematicObstacle} will move on.
+   */
   public KinematicObstacle(GameController controller, float startX, float startY, float width,
       float height, float angle, Paint fill, float speed, Path path) {
     super(controller, startX, startY, width, height, angle, fill);
@@ -32,11 +40,18 @@ public class KinematicObstacle extends Obstacle {
     pdIterator = path.getPathData().listIterator();
   }
 
+  /**
+   * Creates a {@code KinematicObstacle} with the default fill.
+   */
   public KinematicObstacle(GameController controller, float startX, float startY, float width,
       float height, float angle, float speed, Path path) {
     this(controller, startX, startY, width, height, angle, DEFAULT_OBSTACLE_FILL, speed, path);
   }
 
+  /**
+   * Create a {@code KinematicObstacle} that will inherit the {@code Obstacle} properties of {@code
+   * staticObstacle}.
+   */
   public KinematicObstacle(Obstacle staticObstacle, float speed, Path path) {
     super(staticObstacle.controller, staticObstacle.startX, staticObstacle.startY,
         staticObstacle.width, staticObstacle.height, staticObstacle.angle,
@@ -79,6 +94,9 @@ public class KinematicObstacle extends Obstacle {
     body.setLinearVelocity(velocityVector);
   }
 
+  /**
+   * Move the {@code KinematicObstacle} along {@code path}.
+   */
   private void interpolate() {
     if (pdNext == null) {
       pdNext = pdIterator.next();

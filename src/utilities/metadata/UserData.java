@@ -28,7 +28,8 @@ public class UserData {
   }
 
   /**
-   * Add a {@code String}, {@code Object} pair to the {@code UserData}. Overrides an existing value.
+   * Add a {@code String}, {@code Object} pair to the {@code UserData}. Overrides an existing
+   * value.
    *
    * @param name the {@code String} identifier of the data pair.
    * @param value the {@code Object} value of the data pair.
@@ -68,7 +69,7 @@ public class UserData {
    */
   public Object get(String key) {
     Object data = userData.get(key);
-    if(data != null) {
+    if (data != null) {
       return userData.get(key);
     } else {
       return new Object();
