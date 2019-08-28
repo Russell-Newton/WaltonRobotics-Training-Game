@@ -8,18 +8,12 @@ public class BasicGameController extends GameController {
 
   @Override
   protected void init() {
-//    Right now the sprite is Mario
-    player = new Player(this,
-        "https://www.seekpng.com/png/detail/223-2238252_image-result-for-mario-sprite-video-game-font.png");
-//    Here place in your player.set methods:
-//    player.setJumpKey();
-//    player.setRunKey();
-//    player.setWalkLeftKey();
-//    player.setWalkRightKey();
+    // Code goes here
   }
 
   @Override
   protected void execute() {
+    // Code goes here
   }
 
   @Override
@@ -29,6 +23,6 @@ public class BasicGameController extends GameController {
 
   @Override
   protected void end() {
-
+    // Code goes here
   }
 }
