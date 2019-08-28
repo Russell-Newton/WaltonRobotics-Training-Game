@@ -90,6 +90,8 @@ public class KinematicObstacle extends Obstacle {
     super.update();
     if (pdIterator.hasNext()) {
       interpolate();
+    } else {
+      pdIterator = path.getPathData().listIterator();
     }
     body.setLinearVelocity(velocityVector);
   }
