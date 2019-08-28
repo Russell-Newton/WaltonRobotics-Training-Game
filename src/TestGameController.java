@@ -23,7 +23,7 @@ public class TestGameController extends GameController {
     createObstacles("/assets/obstacles/Obstacles.json");
     setBackground("background8");
 
-    player = new Player(this, walkSprite);
+    player.setSprite(walkSprite);
     player.setJumpKey(W);
     player.setWalkLeftKey(A);
     player.setWalkRightKey(D);

@@ -89,6 +89,7 @@ public abstract class GameController {
    */
   @FXML
   protected void initialize() {
+    player = new Player(this);
     setBackground(backgroundPaint);
     createObstacles("/assets/obstacles/Boundaries.json");
 
