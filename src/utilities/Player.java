@@ -469,6 +469,15 @@ public class Player extends Obstacle {
   }
 
   @Override
+  public void setSprite(Paint sprite) {
+    screenMask.setFill(sprite);
+  }
+
+  public void setSprite(String sprite) {
+    screenMask.setFill(getFillFromString(sprite, true));
+  }
+
+  @Override
   public String toString() {
     StringBuilder toString = new StringBuilder(String.format("Player:[%n  ScreenMask:[x:%f, y:%f, "
             + "width:%f, height:%f],%n  WorldBody:[x:%f, y:%f, angle:%f, Shape:[%n",

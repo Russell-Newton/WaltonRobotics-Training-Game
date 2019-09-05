@@ -6,7 +6,7 @@
       "width": 100,
       "height": 15,
       "angle": 0,
-      "sprite": "bricks1.png"
+      "sprite": "bricks1"
     },
     "b": {
       "type": "kinematic",
@@ -15,13 +15,13 @@
       "width": 20,
       "height": 2,
       "angle": 0,
-      "sprite": "stone2",
+      "sprite": "grass1",
       "speed": 10,
-      "interpolation": "cubic",
+      "interpolation": "linear",
       "path": [
         [0, 0],
         [10, 0],
-        [10, 10],
+        [80, 0],
         [0, 0]
       ]
     }

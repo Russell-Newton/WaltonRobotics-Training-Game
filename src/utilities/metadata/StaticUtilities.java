@@ -47,9 +47,9 @@ public class StaticUtilities {
   public static final Paint DEFAULT_PLAYER_FILL = Color.BLUE;
   public static final float DEFAULT_PLAYER_MASS = 1;
   public static final float DEFAULT_PLAYER_FRICTION = 10;
-  public static final float DEFAULT_PLAYER_RESTITUTION = 0;
+  public static final float DEFAULT_PLAYER_RESTITUTION = 0f;
   public static final Vec2 JUMP_VECTOR = new Vec2(0, 30f);
-  public static final Vec2 WALK_VECTOR = new Vec2(15f, 0);
+  public static final Vec2 WALK_VECTOR = new Vec2(20f, 0);
   public static final Vec2 RUN_VECTOR = new Vec2(30f, 0);
   public static final int JUMP_COUNT = 4;
   public static final boolean STOP_HORIZONTAL_MOTION_ON_KEY_RELEASE = true;

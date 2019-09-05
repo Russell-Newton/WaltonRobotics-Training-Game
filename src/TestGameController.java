@@ -1,6 +1,7 @@
 import static javafx.scene.input.KeyCode.A;
 import static javafx.scene.input.KeyCode.D;
 import static javafx.scene.input.KeyCode.SHIFT;
+import static javafx.scene.input.KeyCode.SPACE;
 import static javafx.scene.input.KeyCode.W;
 import static utilities.metadata.StaticUtilities.getFillFromString;
 
@@ -24,7 +25,7 @@ public class TestGameController extends GameController {
     setBackground("background8");
 
     player.setSprite(walkSprite);
-    player.setJumpKey(W);
+    player.setJumpKey(SPACE);
     player.setWalkLeftKey(A);
     player.setWalkRightKey(D);
     player.setRunKey(SHIFT);   // What to hold down to run
